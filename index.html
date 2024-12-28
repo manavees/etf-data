@@ -1,56 +1,128 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ETF Data Visualization</title>
-    <link
-        rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.css"
-    />
-    <style>
-        body {
-            background-color: #ffffff;
-            color: #000000;
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ETF Data Visualization</title>
+  <style>
+    :root {
+      --background-color-light: #ffffff;
+      --text-color-light: #000000;
+      --card-background-light: #f9f9f9;
 
-        .container {
-            padding: 20px;
-            max-width: 800px;
-            margin: 0 auto;
-        }
+      --background-color-dark: #121212;
+      --text-color-dark: #ffffff;
+      --card-background-dark: #1e1e1e;
 
-        #chart-container {
-            position: relative;
-            height: 400px;
-        }
+      --primary-color: #4caf50;
+    }
 
-        select {
-            margin: 10px 0;
-            padding: 10px;
-            font-size: 1rem;
-        }
-    </style>
+    body.light-mode {
+      --background-color: var(--background-color-light);
+      --text-color: var(--text-color-light);
+      --card-background: var(--card-background-light);
+    }
+
+    body.dark-mode {
+      --background-color: var(--background-color-dark);
+      --text-color: var(--text-color-dark);
+      --card-background: var(--card-background-dark);
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background-color: var(--background-color);
+      color: var(--text-color);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    h1 {
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    #controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    select {
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid var(--primary-color);
+      font-size: 16px;
+      background-color: var(--card-background);
+      color: var(--text-color);
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    select:focus {
+      outline: none;
+      border-color: var(--primary-color);
+    }
+
+    #chart-container {
+      width: 90%;
+      max-width: 800px;
+      height: 400px;
+      background-color: var(--card-background);
+      border-radius: 8px;
+      padding: 10px;
+      box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5);
+      transition: background-color 0.3s;
+    }
+
+    #theme-toggle {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      cursor: pointer;
+      background-color: var(--card-background);
+      color: var(--text-color);
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.3);
+      transition: background-color 0.3s, color 0.3s;
+    }
+  </style>
 </head>
-<body>
-    <div class="container">
-        <select id="ticker-selector"></select>
-        <select id="range-selector">
-            <option value="1M">1 Month</option>
-            <option value="6M">6 Months</option>
-            <option value="1Y">1 Year</option>
-            <option value="2Y">2 Years</option>
-            <option value="3Y">3 Years</option>
-            <option value="5Y">5 Years</option>
-            <option value="10Y">10 Years</option>
-            <option value="MAX">Max</option>
-        </select>
-        <div id="chart-container"></div>
-    </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-    <script src="etf-visualization.js"></script>
+<body class="dark-mode">
+  <button id="theme-toggle">☀️</button>
+  <h1>ETF Data Visualization</h1>
+  <div id="controls">
+    <select id="ticker-select"></select>
+    <select id="range-select">
+      <option value="max">Max</option>
+      <option value="10y">10 Years</option>
+      <option value="5y">5 Years</option>
+      <option value="4y">4 Years</option>
+      <option value="3y">3 Years</option>
+      <option value="2y">2 Years</option>
+      <option value="1y">1 Year</option>
+      <option value="6m">6 Months</option>
+      <option value="1m">1 Month</option>
+    </select>
+  </div>
+  <div id="chart-container"></div>
+
+  <!-- Chart.js and Date Adapter -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+  <script src="etf-visualization.js"></script>
 </body>
 </html>
