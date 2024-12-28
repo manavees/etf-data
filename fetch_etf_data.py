@@ -18,34 +18,37 @@ def load_etf_tickers(file_name):
         print(f"Error: {file_name} not found. Please ensure the file exists.")
         return []
 
-def get_latest_date_from_file(file_name):
+def get_missing_start_date(ticker, current_data):
     """
-    Get the latest date from the existing JSON file.
+    Determine the missing date range for an existing ticker.
 
     Args:
-        file_name (str): The name of the JSON file to read.
+        ticker (str): The ticker symbol.
+        current_data (dict): The existing data from etf-data.json.
 
     Returns:
-        str: The latest date in the file, formatted as 'YYYY-MM-DD'.
-             If the file doesn't exist or is invalid, returns DEFAULT_START_DATE.
+        str: The earliest missing date for the ticker.
     """
-    try:
-        with open(file_name, "r") as json_file:
-            current_data = json.load(json_file)
-        # Extract the latest date for each ETF
-        latest_dates = [
-            max(datetime.strptime(date, "%Y-%m-%d") for date in data.keys())
-            for data in current_data.values() if data
-        ]
-        return max(latest_dates).strftime("%Y-%m-%d")
-    except (FileNotFoundError, ValueError):
-        print(f"{file_name} not found or invalid. Defaulting to DEFAULT_START_DATE.")
+    if ticker in current_data and current_data[ticker]:
+        # Check if data exists starting from DEFAULT_START_DATE
+        available_dates = sorted(datetime.strptime(date, "%Y-%m-%d") for date in current_data[ticker].keys())
+        first_available_date = available_dates[0]
+        if first_available_date > datetime.strptime(DEFAULT_START_DATE, "%Y-%m-%d"):
+            # If the first available date is after DEFAULT_START_DATE, return DEFAULT_START_DATE
+            return DEFAULT_START_DATE
+        else:
+            # Otherwise, fetch data from the latest available date
+            latest_date = max(available_dates)
+            return latest_date.strftime("%Y-%m-%d")
+    else:
+        # For new tickers, fetch from DEFAULT_START_DATE
         return DEFAULT_START_DATE
 
-def fetch_historical_etf_data(etf_tickers, start_date, end_date):
+def fetch_historical_etf_data(etf_tickers, current_data, end_date):
     """Fetch historical adjusted close or close data for given ETFs."""
     historical_data = {}
     for ticker in etf_tickers:
+        start_date = get_missing_start_date(ticker, current_data)
         try:
             print(f"Fetching data for {ticker} from {start_date} to {end_date}...")
             data = yf.download(ticker, start=start_date, end=end_date)
@@ -103,10 +106,16 @@ def main():
         print("No tickers found. Exiting.")
         return
 
-    start_date = get_latest_date_from_file(DATA_FILE)
+    # Load current data from etf-data.json
+    try:
+        with open(DATA_FILE, "r") as json_file:
+            current_data = json.load(json_file)
+    except FileNotFoundError:
+        current_data = {}
+
     end_date = datetime.now().strftime("%Y-%m-%d")
     print("Fetching historical ETF data...")
-    historical_data = fetch_historical_etf_data(etf_tickers, start_date, end_date)
+    historical_data = fetch_historical_etf_data(etf_tickers, current_data, end_date)
     print("Fetched data:", historical_data)  # Debugging output
 
     if historical_data:
