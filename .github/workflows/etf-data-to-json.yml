@@ -1,6 +1,8 @@
 name: Export ETF Data to JSON and Push to Repository
 
 on:
+  schedule:
+    - cron: '0 1 * * *'  # Runs daily at 01:00 UTC (1 hour after Update ETF Data)
   workflow_dispatch:  # Allows manual triggering of the workflow
 
 jobs:
