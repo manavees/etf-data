@@ -10,7 +10,7 @@ app = Flask(__name__)
 
 # GitHub authentication (replace with your token)
 GITHUB_TOKEN = os.environ["GITHUB_TOKEN"]
-REPO_NAME = "your_username/etf-data"  # e.g., "your_username/etf-data"
+REPO_NAME = "manavees/etf-data"  # e.g., "your_username/etf-data"
 JSON_FILE_PATH = "etf_data.json"  # Path to the JSON file in your repo
 
 # List of ETF tickers
