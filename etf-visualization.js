@@ -20,41 +20,39 @@ function filterDataByRange(data, range) {
   switch (range) {
     case "1m":
       cutoffDate = new Date(today.setMonth(today.getMonth() - 1));
-      break;
+      return filterData(data, cutoffDate, false); // No sampling for 1 month
     case "6m":
       cutoffDate = new Date(today.setMonth(today.getMonth() - 6));
-      break;
+      return filterData(data, cutoffDate, false); // No sampling for 6 months
     case "1y":
       cutoffDate = new Date(today.setFullYear(today.getFullYear() - 1));
-      break;
+      return filterData(data, cutoffDate, true);
     case "2y":
       cutoffDate = new Date(today.setFullYear(today.getFullYear() - 2));
-      break;
+      return filterData(data, cutoffDate, true);
     case "3y":
       cutoffDate = new Date(today.setFullYear(today.getFullYear() - 3));
-      break;
-    case "4y":
-      cutoffDate = new Date(today.setFullYear(today.getFullYear() - 4));
-      break;
+      return filterData(data, cutoffDate, true);
     case "5y":
       cutoffDate = new Date(today.setFullYear(today.getFullYear() - 5));
-      break;
+      return filterData(data, cutoffDate, true);
     case "10y":
       cutoffDate = new Date(today.setFullYear(today.getFullYear() - 10));
-      break;
+      return filterData(data, cutoffDate, true);
     case "max":
     default:
-      return sampleData(data, 200); // Sample data for "Max"
+      return sampleData(data, 300); // Max uses sampling
   }
+}
 
+function filterData(data, cutoffDate, sample) {
   const filteredData = {};
   for (const [date, price] of Object.entries(data)) {
     if (new Date(date) >= cutoffDate) {
       filteredData[date] = price;
     }
   }
-
-  return sampleData(filteredData, 200); // Sample data to smooth
+  return sample ? sampleData(filteredData, 300) : filteredData;
 }
 
 function sampleData(data, maxPoints) {
@@ -98,8 +96,8 @@ function plotData(ticker, data) {
           data: prices,
           borderColor: "rgba(75, 192, 192, 1)",
           borderWidth: 2,
-          tension: 0.4, // Smooth line
-          pointRadius: 0, // Hide individual points for smoother appearance
+          tension: 0.4, // Smooth line for long ranges
+          pointRadius: labels.length <= 200 ? 3 : 0, // Show points only for short ranges
           fill: false,
         },
       ],
@@ -108,6 +106,16 @@ function plotData(ticker, data) {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
+        tooltip: {
+          enabled: true,
+          callbacks: {
+            label: (context) => {
+              const date = context.label;
+              const price = context.raw;
+              return `Date: ${date}, Price: ${price}`;
+            },
+          },
+        },
         legend: {
           display: true,
           labels: {
@@ -119,7 +127,7 @@ function plotData(ticker, data) {
         x: {
           type: "time",
           time: {
-            unit: "month",
+            unit: "day",
           },
           title: {
             display: true,
