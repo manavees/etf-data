@@ -32,5 +32,5 @@ jobs:
         python main.py
     - name: Run Historical Data Updater
       run: |
-        python update_historical_etf_data.py
+        python fetch_historical_etf_data.py
 
