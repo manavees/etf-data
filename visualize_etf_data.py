@@ -1,9 +1,11 @@
 import duckdb
 import pandas as pd
 import matplotlib.pyplot as plt
+import os
 
 # Define database file
 db_file = "etf-data.duckdb"
+plots_dir = "plots"
 
 def fetch_data_for_visualization(ticker):
     """
@@ -27,7 +29,7 @@ def fetch_data_for_visualization(ticker):
 
 def plot_etf_data(ticker, data):
     """
-    Plot historical price data for a given ETF.
+    Plot historical price data for a given ETF and save it as an image.
 
     Args:
         ticker (str): Ticker symbol.
@@ -40,7 +42,14 @@ def plot_etf_data(ticker, data):
     plt.ylabel("Price")
     plt.legend()
     plt.grid()
-    plt.show()
+    
+    # Ensure plots directory exists
+    os.makedirs(plots_dir, exist_ok=True)
+    
+    # Save the plot as a file
+    plot_file = os.path.join(plots_dir, f"{ticker}.png")
+    plt.savefig(plot_file)
+    print(f"Saved plot for {ticker} to {plot_file}")
 
 def main():
     # Tickers to visualize
