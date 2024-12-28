@@ -46,9 +46,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                         data: prices,
                         borderColor: "rgba(75, 192, 192, 1)",
                         backgroundColor: "rgba(75, 192, 192, 0.2)",
-                        borderWidth: 3, // Thicker lines for better interactivity
+                        borderWidth: 2, // Default thickness
                         pointRadius: 0,
-                        tension: 0.4, // Smooth line effect
                     },
                 ],
             },
@@ -66,9 +65,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 scales: {
                     x: {
                         ticks: {
-                            color: getComputedStyle(document.body).getPropertyValue(
-                                "--axis-color"
-                            ),
+                            color: "#000", // Static color for axes
                         },
                         grid: {
                             display: false,
@@ -76,14 +73,10 @@ document.addEventListener("DOMContentLoaded", async () => {
                     },
                     y: {
                         ticks: {
-                            color: getComputedStyle(document.body).getPropertyValue(
-                                "--axis-color"
-                            ),
+                            color: "#000",
                         },
                         grid: {
-                            color: getComputedStyle(document.body).getPropertyValue(
-                                "--grid-color"
-                            ),
+                            color: "#e0e0e0",
                         },
                     },
                 },
@@ -128,15 +121,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
 
         rangeSelector.addEventListener("change", () => {
-            const selectedTicker = tickerSelector.value;
-            const selectedRange = rangeSelector.value;
-            plotData(data, selectedTicker, selectedRange);
-        });
-
-        themeToggle.addEventListener("click", () => {
-            document.body.classList.toggle("dark-mode");
-            const theme = document.body.classList.contains("dark-mode") ? "Dark" : "Light";
-            themeToggle.innerText = `${theme} Mode`;
             const selectedTicker = tickerSelector.value;
             const selectedRange = rangeSelector.value;
             plotData(data, selectedTicker, selectedRange);
