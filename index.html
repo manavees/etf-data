@@ -4,127 +4,28 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ETF Data Visualization</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script> <!-- Date adapter -->
 </head>
 <body>
   <h1>ETF Data Visualization</h1>
-  <div>
-    <label for="ticker-select">Select a Ticker:</label>
+
+  <div id="controls">
+    <label for="ticker-select">Select Ticker:</label>
     <select id="ticker-select"></select>
+
+    <label for="time-range-select">Time Range:</label>
+    <select id="time-range-select">
+      <option value="1m">1 Month</option>
+      <option value="3m">3 Months</option>
+      <option value="1y">1 Year</option>
+      <option value="max" selected>Max</option>
+    </select>
   </div>
-  <canvas id="etf-chart" width="800" height="400"></canvas>
 
-  <script>
-    let chartInstance = null;
+  <div id="theme-toggle">
+    <label for="dark-mode-toggle">Dark Mode:</label>
+    <input type="checkbox" id="dark-mode-toggle">
+  </div>
 
-    async function fetchETFData() {
-      try {
-        const response = await fetch('./etf-data.json');
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const data = await response.json();
-        console.log("Fetched Data:", data);
-        return data;
-      } catch (error) {
-        console.error("Error fetching ETF data:", error);
-      }
-    }
-
-    function populateSelectBox(tickers) {
-      const select = document.getElementById('ticker-select');
-      select.innerHTML = ""; // Clear any existing options
-      tickers.forEach(ticker => {
-        const option = document.createElement('option');
-        option.value = ticker;
-        option.textContent = ticker;
-        select.appendChild(option);
-      });
-    }
-
-    function plotData(ticker, data) {
-      if (!data || Object.keys(data).length === 0) {
-        console.warn(`No data available for ticker: ${ticker}`);
-        return;
-      }
-
-      const ctx = document.getElementById('etf-chart').getContext('2d');
-      const dates = Object.keys(data).sort();
-      const prices = dates.map(date => data[date]);
-
-      if (chartInstance) chartInstance.destroy();
-
-      chartInstance = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: dates,
-          datasets: [{
-            label: `Price of ${ticker}`,
-            data: prices,
-            borderColor: 'rgba(75, 192, 192, 1)',
-            borderWidth: 1,
-            fill: false,
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            title: {
-              display: true,
-              text: `Historical Prices for ${ticker}`,
-            },
-          },
-          scales: {
-            x: {
-              type: 'time', // Time scale for dates
-              time: {
-                unit: 'month', // Adjust as needed
-              },
-              title: {
-                display: true,
-                text: 'Date',
-              }
-            },
-            y: {
-              title: {
-                display: true,
-                text: 'Price',
-              }
-            }
-          }
-        }
-      });
-    }
-
-    async function main() {
-      console.log("Initializing visualization...");
-      const data = await fetchETFData();
-
-      if (!data || Object.keys(data).length === 0) {
-        console.error("No data fetched or the data is empty.");
-        return;
-      }
-
-      const tickers = Object.keys(data);
-      if (tickers.length === 0) {
-        console.error("No tickers found in the data.");
-        return;
-      }
-
-      console.log("Tickers:", tickers);
-      populateSelectBox(tickers);
-
-      const defaultTicker = tickers[0];
-      console.log("Default Ticker:", defaultTicker);
-      plotData(defaultTicker, data[defaultTicker]);
-
-      document.getElementById('ticker-select').addEventListener('change', (event) => {
-        const selectedTicker = event.target.value;
-        console.log("Selected Ticker:", selectedTicker);
-        plotData(selectedTicker, data[selectedTicker]);
-      });
-    }
-
-    main();
-  </script>
+  <canvas id="etf-chart"></canvas>
 </body>
 </html>
