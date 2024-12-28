@@ -79,7 +79,7 @@ function plotData(ticker, data) {
         legend: {
           display: true,
           labels: {
-            color: "#ffffff",
+            color: getComputedStyle(document.body).getPropertyValue("--text-color"),
           },
         },
       },
@@ -92,20 +92,20 @@ function plotData(ticker, data) {
           title: {
             display: true,
             text: "Date",
-            color: "#ffffff",
+            color: getComputedStyle(document.body).getPropertyValue("--text-color"),
           },
           ticks: {
-            color: "#ffffff",
+            color: getComputedStyle(document.body).getPropertyValue("--text-color"),
           },
         },
         y: {
           title: {
             display: true,
             text: "Price",
-            color: "#ffffff",
+            color: getComputedStyle(document.body).getPropertyValue("--text-color"),
           },
           ticks: {
-            color: "#ffffff",
+            color: getComputedStyle(document.body).getPropertyValue("--text-color"),
           },
         },
       },
@@ -113,11 +113,25 @@ function plotData(ticker, data) {
   });
 }
 
+function toggleTheme() {
+  const body = document.body;
+  const toggleButton = document.getElementById("theme-toggle");
+
+  if (body.classList.contains("dark-mode")) {
+    body.classList.replace("dark-mode", "light-mode");
+    toggleButton.textContent = "🌙"; // Moon icon for dark mode
+  } else {
+    body.classList.replace("light-mode", "dark-mode");
+    toggleButton.textContent = "☀️"; // Sun icon for light mode
+  }
+}
+
 async function initialize() {
   const data = await fetchData();
 
   const tickerSelect = document.getElementById("ticker-select");
   const rangeSelect = document.getElementById("range-select");
+  const themeToggle = document.getElementById("theme-toggle");
 
   if (Object.keys(data).length === 0) {
     console.error("No tickers found in the fetched data!");
@@ -154,4 +168,7 @@ async function initialize() {
     const filteredData = filterDataByRange(data[selectedTicker], selectedRange);
     plotData(selectedTicker, filteredData);
   });
+
+  // Add event listener for theme toggle
+  themeToggle.addEventListener("click", toggleTheme);
 }
