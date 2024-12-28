@@ -52,9 +52,15 @@ def fetch_historical_etf_data(etf_tickers, start_date, end_date):
             data = yf.download(ticker, start=start_date, end=end_date)
             if not data.empty:
                 if "Adj Close" in data.columns:
-                    historical_data[ticker] = data['Adj Close'].to_dict()
+                    historical_data[ticker] = {
+                        date.strftime("%Y-%m-%d"): price
+                        for date, price in data['Adj Close'].items()
+                    }
                 elif "Close" in data.columns:
-                    historical_data[ticker] = data['Close'].to_dict()
+                    historical_data[ticker] = {
+                        date.strftime("%Y-%m-%d"): price
+                        for date, price in data['Close'].items()
+                    }
                 else:
                     print(f"Warning: No 'Adj Close' or 'Close' data found for {ticker}. Skipping.")
             else:
@@ -64,12 +70,9 @@ def fetch_historical_etf_data(etf_tickers, start_date, end_date):
 
     return historical_data
 
-
-
 def update_json_file(file_name, new_data):
     """Update the JSON file with the new historical data."""
     try:
-        # Load existing data
         with open(file_name, "r") as json_file:
             current_data = json.load(json_file)
     except FileNotFoundError:
@@ -80,13 +83,15 @@ def update_json_file(file_name, new_data):
     for ticker, values in new_data.items():
         if ticker not in current_data:
             current_data[ticker] = {}
-        current_data[ticker].update(values)
+        # Ensure all keys are strings
+        current_data[ticker].update({str(k): v for k, v in values.items()})
 
     # Save the updated data
     with open(file_name, "w") as json_file:
         json.dump(current_data, json_file, indent=4)
 
     print(f"Data updated and saved to {file_name}")
+
 
 def main():
     """Main function to fetch and update ETF historical data."""
