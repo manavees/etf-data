@@ -4,6 +4,7 @@ name: Update ETF Data Daily
 on:
   schedule:
     - cron: '0 0 * * *'  # Runs daily at midnight UTC
+  workflow_dispatch:
 
 jobs:
   update-data:
