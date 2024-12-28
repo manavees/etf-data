@@ -1,4 +1,4 @@
-name: Export ETF Data to JSON
+name: Export ETF Data to JSON and Push to Repository
 
 on:
   workflow_dispatch:  # Allows manual triggering of the workflow
@@ -42,8 +42,15 @@ jobs:
         conn.close()
         EOF
 
-    - name: Upload JSON File as Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: etf-data-json
-        path: etf-data.json
+    - name: Configure Git
+      run: |
+        git config --global user.name "GitHub Actions"
+        git config --global user.email "actions@github.com"
+
+    - name: Commit and Push Changes
+      run: |
+        git add etf-data.json
+        git commit -m "Update ETF data JSON"
+        git push
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
