@@ -1,6 +1,7 @@
 import yfinance as yf
 import duckdb
 import json
+import pandas as pd
 from datetime import datetime
 
 # Define database file
