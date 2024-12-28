@@ -42,7 +42,7 @@ function plotData(data, ticker, range) {
   const rangeStart = getRangeStart(range);
   const filteredData = Object.entries(data[ticker])
     .map(([date, price]) => ({ x: new Date(date), y: parseFloat(price).toFixed(2) }))
-    .filter((item) => item.x >= rangeStart);
+    .filter((item) => item.x >= rangeStart || range === "1m" || range === "6m"); // Keep all dates for 1m and 6m
 
   const ctx = document.createElement("canvas");
   chartContainer.innerHTML = "";
@@ -56,7 +56,7 @@ function plotData(data, ticker, range) {
           label: ticker,
           data: filteredData,
           borderColor: "rgba(75, 192, 192, 1)",
-          borderWidth: 2,
+          borderWidth: 3, // Increased line thickness
           tension: 0.3,
           pointRadius: 0,
           hoverRadius: 5,
@@ -70,7 +70,7 @@ function plotData(data, ticker, range) {
         x: {
           type: "time",
           time: {
-            unit: "month",
+            unit: "day",
           },
           ticks: {
             color: getComputedStyle(document.body).getPropertyValue("--text-color"),
