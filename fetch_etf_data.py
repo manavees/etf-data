@@ -61,19 +61,15 @@ def fetch_historical_etf_data(conn, ticker, start_date, end_date):
         # Use "Adj Close" or fallback to "Close"
         column = "Adj Close" if "Adj Close" in data.columns else "Close"
 
-        # Reset index to make 'Date' a regular column
-        data.reset_index(inplace=True)
-
-        # Check for required columns
-        if "Date" not in data.columns or column not in data.columns:
-            print(f"Error: Missing 'Date' or '{column}' column for {ticker}. Skipping.")
-            return
+        # Reset index and simplify the DataFrame
+        data = data[[column]].reset_index()
+        data.columns = ["Date", "Price"]
 
         for _, row in data.iterrows():
             try:
                 # Extract date and price
                 date = row["Date"]
-                price = row[column]
+                price = row["Price"]
 
                 # Ensure the values are valid
                 if pd.isnull(date) or pd.isnull(price):
@@ -96,6 +92,7 @@ def fetch_historical_etf_data(conn, ticker, start_date, end_date):
         print(f"Data for {ticker} updated successfully.")
     else:
         print(f"No data available for {ticker}.")
+
 
 
 
