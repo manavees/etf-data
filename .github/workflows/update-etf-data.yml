@@ -30,4 +30,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Pass the built-in GitHub token
       run: |
         python main.py
+    - name: Run Historical Data Updater
+      run: |
+        python update_historical_etf_data.py
 
