@@ -27,6 +27,21 @@ function filterDataByRange(data, range) {
     case "1y":
       cutoffDate = new Date(today.setFullYear(today.getFullYear() - 1));
       break;
+    case "2y":
+      cutoffDate = new Date(today.setFullYear(today.getFullYear() - 2));
+      break;
+    case "3y":
+      cutoffDate = new Date(today.setFullYear(today.getFullYear() - 3));
+      break;
+    case "4y":
+      cutoffDate = new Date(today.setFullYear(today.getFullYear() - 4));
+      break;
+    case "5y":
+      cutoffDate = new Date(today.setFullYear(today.getFullYear() - 5));
+      break;
+    case "10y":
+      cutoffDate = new Date(today.setFullYear(today.getFullYear() - 10));
+      break;
     case "max":
     default:
       return data; // Return all data
@@ -67,6 +82,7 @@ function plotData(ticker, data) {
           data: prices,
           borderColor: "rgba(75, 192, 192, 1)",
           borderWidth: 2,
+          tension: 0.4, // Add smoothing to the line
           pointBackgroundColor: "rgba(255, 255, 255, 0.8)",
           fill: false,
         },
@@ -148,27 +164,25 @@ async function initialize() {
 
   console.log("Tickers:", Object.keys(data));
 
-  // Default to the first ticker
+  // Set default ticker and range
   const defaultTicker = Object.keys(data)[0];
-  const defaultRange = "max";
-  const filteredData = filterDataByRange(data[defaultTicker], defaultRange);
-  plotData(defaultTicker, filteredData);
+  tickerSelect.value = defaultTicker;
 
-  // Add event listeners for dropdowns
+  // Plot the default ticker and range
+  plotData(defaultTicker, filterDataByRange(data[defaultTicker], "max"));
+
+  // Event listeners
   tickerSelect.addEventListener("change", () => {
     const selectedTicker = tickerSelect.value;
     const selectedRange = rangeSelect.value;
-    const filteredData = filterDataByRange(data[selectedTicker], selectedRange);
-    plotData(selectedTicker, filteredData);
+    plotData(selectedTicker, filterDataByRange(data[selectedTicker], selectedRange));
   });
 
   rangeSelect.addEventListener("change", () => {
     const selectedTicker = tickerSelect.value;
     const selectedRange = rangeSelect.value;
-    const filteredData = filterDataByRange(data[selectedTicker], selectedRange);
-    plotData(selectedTicker, filteredData);
+    plotData(selectedTicker, filterDataByRange(data[selectedTicker], selectedRange));
   });
 
-  // Add event listener for theme toggle
   themeToggle.addEventListener("click", toggleTheme);
 }
