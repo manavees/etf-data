@@ -1,0 +1,26 @@
+- name: Export ETF Data to JSON
+  run: |
+    python - <<EOF
+    import duckdb
+    import json
+
+    conn = duckdb.connect("etf-data.duckdb")
+    data = {}
+
+    # Fetch data for all tickers
+    tickers = conn.execute("SELECT DISTINCT ticker FROM etf_data").fetchall()
+    for ticker, in tickers:
+        result = conn.execute(f"SELECT date, price FROM etf_data WHERE ticker = '{ticker}' ORDER BY date").fetchall()
+        data[ticker] = {str(row[0]): row[1] for row in result}
+
+    # Write to JSON
+    with open("etf-data.json", "w") as f:
+        json.dump(data, f, indent=4)
+    conn.close()
+    EOF
+
+- name: Upload JSON File to GitHub Pages
+  uses: actions/upload-artifact@v4
+  with:
+    name: etf-data-json
+    path: etf-data.json
