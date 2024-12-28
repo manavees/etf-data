@@ -5,7 +5,7 @@ from datetime import datetime
 # ETF tickers and date range
 ETF_TICKERS = ["IWDA.AS", "EMIM.AS", "ECAR.AS", "VHYL.AS", "RBOT.MI"]
 JSON_FILE = "etf-data.json"
-DEFAULT_START_DATE = "2015-01-01"  # Default start date if no data exists
+DEFAULT_START_DATE = "1900-01-01"  # Default start date if no data exists
 
 def get_latest_date_from_file(file_name):
     """
