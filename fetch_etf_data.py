@@ -61,22 +61,28 @@ def fetch_historical_etf_data(conn, ticker, start_date, end_date):
         # Use "Adj Close" or fallback to "Close"
         column = "Adj Close" if "Adj Close" in data.columns else "Close"
 
-        # Reset index and validate rows
+        # Reset index to make 'Date' a regular column
         data.reset_index(inplace=True)
+
+        # Check for required columns
         if "Date" not in data.columns or column not in data.columns:
             print(f"Error: Missing 'Date' or '{column}' column for {ticker}. Skipping.")
             return
 
         for _, row in data.iterrows():
             try:
-                # Ensure date and price are valid
-                if pd.isnull(row['Date']) or pd.isnull(row[column]):
+                # Extract date and price
+                date = row["Date"]
+                price = row[column]
+
+                # Ensure the values are valid
+                if pd.isnull(date) or pd.isnull(price):
                     print(f"Skipping invalid row for {ticker}: {row}")
                     continue
 
-                # Extract date and price as scalars
-                date_str = row['Date'].strftime("%Y-%m-%d") if hasattr(row['Date'], "strftime") else str(row['Date'])
-                price = float(row[column])
+                # Convert date and price to proper formats
+                date_str = date.strftime("%Y-%m-%d") if hasattr(date, "strftime") else str(date)
+                price = float(price)
 
                 # Insert into DuckDB
                 conn.execute("""
@@ -90,6 +96,7 @@ def fetch_historical_etf_data(conn, ticker, start_date, end_date):
         print(f"Data for {ticker} updated successfully.")
     else:
         print(f"No data available for {ticker}.")
+
 
 
 def main():
