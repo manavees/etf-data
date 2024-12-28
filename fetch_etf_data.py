@@ -80,7 +80,6 @@ def fetch_historical_etf_data(etf_tickers, start_date, end_date):
             print(f"Error fetching data for {ticker}: {e}")
 
     return historical_data
-a
 
 def update_json_file(file_name, new_data):
     """Update the JSON file with the new historical data."""
