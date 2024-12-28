@@ -2,7 +2,7 @@ name: Update ETF Data
 
 on:
   schedule:
-    - cron: "0 0 * * *"  # Runs daily at midnight UTC
+    - cron: "0 0 * * *"  # Runs daily
   workflow_dispatch:
 
 jobs:
@@ -10,31 +10,30 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
+    - name: Checkout repository
       uses: actions/checkout@v3
 
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: "3.x"
+        python-version: "3.9"
 
     - name: Install dependencies
-      run: pip install yfinance pandas
+      run: pip install yfinance duckdb
 
-    - name: Run ETF data fetcher
+    - name: Initialize DuckDB
+      run: python initialize_duckdb.py
+
+    - name: Migrate JSON to DuckDB
+      run: python migrate_to_duckdb.py
+
+    - name: Fetch ETF Data
       run: python fetch_etf_data.py
 
-    - name: Show contents of etf-data.json
-      run: |
-        echo "Contents of etf-data.json:"
-        cat etf-data.json
-
-    - name: Commit and push changes
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Commit and Push Changes
       run: |
         git config --global user.name "GitHub Actions"
         git config --global user.email "actions@github.com"
-        git add etf-data.json
+        git add etf-data.duckdb
         git commit -m "Update ETF historical data" || echo "No changes to commit"
-        git push || echo "No changes to push"
+        git push
