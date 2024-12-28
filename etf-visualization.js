@@ -32,7 +32,6 @@ function filterDataByRange(data, range) {
       return data; // Return all data
   }
 
-  // Filter data by date
   const filteredData = {};
   for (const [date, price] of Object.entries(data)) {
     if (new Date(date) >= cutoffDate) {
@@ -43,15 +42,20 @@ function filterDataByRange(data, range) {
 }
 
 function plotData(ticker, data) {
-  const labels = Object.keys(data);
-  const prices = Object.values(data);
-
   const chartContainer = document.getElementById("chart-container");
+  if (!chartContainer) {
+    console.error("Error: #chart-container element not found in the DOM!");
+    return;
+  }
+
   chartContainer.innerHTML = ""; // Clear any previous chart
 
   const canvas = document.createElement("canvas");
   canvas.id = "chart";
   chartContainer.appendChild(canvas);
+
+  const labels = Object.keys(data);
+  const prices = Object.values(data);
 
   new Chart(canvas.getContext("2d"), {
     type: "line",
