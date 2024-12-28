@@ -53,15 +53,15 @@ def fetch_historical_etf_data(etf_tickers, start_date, end_date):
 
             if not data.empty:
                 if "Adj Close" in data.columns:
-                    # Convert the index (dates) to strings
+                    # Convert the index (dates) to strings and values to floats
                     historical_data[ticker] = {
-                        (date.strftime("%Y-%m-%d") if hasattr(date, "strftime") else date): price
+                        (date.strftime("%Y-%m-%d") if hasattr(date, "strftime") else str(date)): float(price)
                         for date, price in data['Adj Close'].items()
                     }
                 elif "Close" in data.columns:
-                    # Convert the index (dates) to strings
+                    # Convert the index (dates) to strings and values to floats
                     historical_data[ticker] = {
-                        (date.strftime("%Y-%m-%d") if hasattr(date, "strftime") else date): price
+                        (date.strftime("%Y-%m-%d") if hasattr(date, "strftime") else str(date)): float(price)
                         for date, price in data['Close'].items()
                     }
                 else:
@@ -77,6 +77,7 @@ def fetch_historical_etf_data(etf_tickers, start_date, end_date):
 
 
 
+
 def update_json_file(file_name, new_data):
     """Update the JSON file with the new historical data."""
     try:
@@ -86,12 +87,13 @@ def update_json_file(file_name, new_data):
         print(f"{file_name} not found. Creating a new file.")
         current_data = {}
 
-    # Merge new data, ensuring all keys are strings
+    # Merge new data into the current data
     for ticker, values in new_data.items():
         if ticker not in current_data:
             current_data[ticker] = {}
+        # Ensure all keys are strings and all values are JSON-serializable
         current_data[ticker].update({
-            str(k): v for k, v in values.items()
+            str(k): float(v) for k, v in values.items()
         })
 
     # Save the updated data
@@ -99,6 +101,7 @@ def update_json_file(file_name, new_data):
         json.dump(current_data, json_file, indent=4)
 
     print(f"Data updated and saved to {file_name}")
+
 
 
 
