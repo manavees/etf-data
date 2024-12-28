@@ -1,5 +1,7 @@
 document.addEventListener("DOMContentLoaded", initialize);
 
+let chart; // Declare a global variable for the chart instance
+
 async function fetchData() {
   try {
     const response = await fetch("etf-data.json");
@@ -20,10 +22,10 @@ function filterDataByRange(data, range) {
   switch (range) {
     case "1m":
       cutoffDate = new Date(today.setMonth(today.getMonth() - 1));
-      return filterData(data, cutoffDate, false); // No sampling for 1 month
+      return filterData(data, cutoffDate, false);
     case "6m":
       cutoffDate = new Date(today.setMonth(today.getMonth() - 6));
-      return filterData(data, cutoffDate, false); // No sampling for 6 months
+      return filterData(data, cutoffDate, false);
     case "1y":
       cutoffDate = new Date(today.setFullYear(today.getFullYear() - 1));
       return filterData(data, cutoffDate, true);
@@ -41,7 +43,7 @@ function filterDataByRange(data, range) {
       return filterData(data, cutoffDate, true);
     case "max":
     default:
-      return sampleData(data, 300); // Max uses sampling
+      return sampleData(data, 300);
   }
 }
 
@@ -59,7 +61,6 @@ function sampleData(data, maxPoints) {
   const keys = Object.keys(data);
   const values = Object.values(data);
 
-  // Calculate the step to sample evenly spaced points
   const step = Math.ceil(keys.length / maxPoints);
   const sampledData = {};
 
@@ -86,7 +87,11 @@ function plotData(ticker, data) {
   const labels = Object.keys(data);
   const prices = Object.values(data);
 
-  new Chart(canvas.getContext("2d"), {
+  // Get the current theme colors
+  const textColor = getComputedStyle(document.body).getPropertyValue("--text-color");
+  const gridColor = getComputedStyle(document.body).getPropertyValue("--grid-color");
+
+  chart = new Chart(canvas.getContext("2d"), {
     type: "line",
     data: {
       labels: labels,
@@ -96,8 +101,8 @@ function plotData(ticker, data) {
           data: prices,
           borderColor: "rgba(75, 192, 192, 1)",
           borderWidth: 2,
-          tension: 0.4, // Smooth line for long ranges
-          pointRadius: labels.length <= 200 ? 3 : 0, // Show points only for short ranges
+          tension: 0.4,
+          pointRadius: labels.length <= 200 ? 3 : 0,
           fill: false,
         },
       ],
@@ -119,7 +124,7 @@ function plotData(ticker, data) {
         legend: {
           display: true,
           labels: {
-            color: getComputedStyle(document.body).getPropertyValue("--text-color"),
+            color: textColor,
           },
         },
       },
@@ -132,25 +137,48 @@ function plotData(ticker, data) {
           title: {
             display: true,
             text: "Date",
-            color: getComputedStyle(document.body).getPropertyValue("--text-color"),
+            color: textColor,
           },
           ticks: {
-            color: getComputedStyle(document.body).getPropertyValue("--text-color"),
+            color: textColor,
+          },
+          grid: {
+            color: gridColor,
           },
         },
         y: {
           title: {
             display: true,
             text: "Price",
-            color: getComputedStyle(document.body).getPropertyValue("--text-color"),
+            color: textColor,
           },
           ticks: {
-            color: getComputedStyle(document.body).getPropertyValue("--text-color"),
+            color: textColor,
+          },
+          grid: {
+            color: gridColor,
           },
         },
       },
     },
   });
+}
+
+function updateChartTheme() {
+  if (chart) {
+    const textColor = getComputedStyle(document.body).getPropertyValue("--text-color");
+    const gridColor = getComputedStyle(document.body).getPropertyValue("--grid-color");
+
+    chart.options.plugins.legend.labels.color = textColor;
+    chart.options.scales.x.title.color = textColor;
+    chart.options.scales.x.ticks.color = textColor;
+    chart.options.scales.x.grid.color = gridColor;
+    chart.options.scales.y.title.color = textColor;
+    chart.options.scales.y.ticks.color = textColor;
+    chart.options.scales.y.grid.color = gridColor;
+
+    chart.update();
+  }
 }
 
 function toggleTheme() {
@@ -164,6 +192,8 @@ function toggleTheme() {
     body.classList.replace("light-mode", "dark-mode");
     toggleButton.textContent = "☀️";
   }
+
+  updateChartTheme(); // Update chart colors dynamically
 }
 
 async function initialize() {
@@ -172,7 +202,6 @@ async function initialize() {
   const tickerSelect = document.getElementById("ticker-select");
   const rangeSelect = document.getElementById("range-select");
 
-  // Populate ticker dropdown
   Object.keys(data).forEach((ticker) => {
     const option = document.createElement("option");
     option.value = ticker;
@@ -180,13 +209,11 @@ async function initialize() {
     tickerSelect.appendChild(option);
   });
 
-  // Set default ticker and range
   const defaultTicker = Object.keys(data)[0];
   tickerSelect.value = defaultTicker;
 
   plotData(defaultTicker, filterDataByRange(data[defaultTicker], "max"));
 
-  // Event listeners
   tickerSelect.addEventListener("change", () => {
     const selectedTicker = tickerSelect.value;
     const selectedRange = rangeSelect.value;
