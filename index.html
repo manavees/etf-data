@@ -15,12 +15,22 @@
   <canvas id="etf-chart" width="800" height="400"></canvas>
 
   <script>
+    let chartInstance = null; // Store the current chart instance
+
+    // Function to fetch ETF data from etf-data.json
     async function fetchETFData() {
-      const response = await fetch('etf-data.json');
-      const data = await response.json();
-      return data;
+      try {
+        const response = await fetch('./etf-data.json'); // Use relative path
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const data = await response.json();
+        console.log("Fetched Data:", data); // Debug log
+        return data;
+      } catch (error) {
+        console.error("Error fetching ETF data:", error);
+      }
     }
 
+    // Populate the dropdown with tickers
     function populateSelectBox(tickers) {
       const select = document.getElementById('ticker-select');
       tickers.forEach(ticker => {
@@ -31,12 +41,17 @@
       });
     }
 
+    // Plot the data using Chart.js
     function plotData(ticker, data) {
       const ctx = document.getElementById('etf-chart').getContext('2d');
       const dates = Object.keys(data).sort();
       const prices = dates.map(date => data[date]);
 
-      new Chart(ctx, {
+      // Destroy the previous chart instance if it exists
+      if (chartInstance) chartInstance.destroy();
+
+      // Create a new chart
+      chartInstance = new Chart(ctx, {
         type: 'line',
         data: {
           labels: dates,
@@ -72,20 +87,29 @@
       });
     }
 
+    // Main function to initialize visualization
     async function main() {
+      console.log("Initializing visualization...");
       const data = await fetchETFData();
+      if (!data) {
+        console.error("No data fetched!");
+        return;
+      }
       const tickers = Object.keys(data);
 
       // Populate dropdown with tickers
+      console.log("Tickers:", tickers);
       populateSelectBox(tickers);
 
       // Default plot for the first ticker
       const defaultTicker = tickers[0];
+      console.log("Default Ticker:", defaultTicker);
       plotData(defaultTicker, data[defaultTicker]);
 
       // Update plot on ticker selection
       document.getElementById('ticker-select').addEventListener('change', (event) => {
         const selectedTicker = event.target.value;
+        console.log("Selected Ticker:", selectedTicker);
         plotData(selectedTicker, data[selectedTicker]);
       });
     }
