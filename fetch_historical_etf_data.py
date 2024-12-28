@@ -25,7 +25,8 @@ def get_latest_date_from_file(file_name):
 
         # Extract the latest date for each ETF
         latest_dates = [
-            max(map(datetime.strptime, data.keys())) for data in current_data.values()
+            max(datetime.strptime(date, "%Y-%m-%d") for date in data.keys())
+            for data in current_data.values()
         ]
 
         # Return the latest date across all ETFs
@@ -35,6 +36,7 @@ def get_latest_date_from_file(file_name):
         # Default to DEFAULT_START_DATE if the file is missing or invalid
         print(f"{file_name} not found or invalid. Defaulting to DEFAULT_START_DATE.")
         return DEFAULT_START_DATE
+
 
 # Dynamically adjust START_DATE based on the latest date in the file
 START_DATE = get_latest_date_from_file(JSON_FILE)
