@@ -21,12 +21,6 @@ jobs:
     - name: Install dependencies
       run: pip install yfinance duckdb
 
-    - name: Initialize DuckDB
-      run: python initialize_duckdb.py
-
-    - name: Migrate JSON to DuckDB
-      run: python migrate_to_duckdb.py
-
     - name: Fetch ETF Data
       run: python fetch_etf_data.py
 
