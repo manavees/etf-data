@@ -6,6 +6,7 @@ from datetime import datetime
 # Define database file
 db_file = "etf-data.duckdb"
 
+
 def initialize_duckdb():
     """
     Initialize the DuckDB database with the required schema.
@@ -21,6 +22,23 @@ def initialize_duckdb():
     """)
     conn.close()
     print(f"Database {db_file} initialized successfully.")
+
+
+def fetch_existing_data(conn, ticker):
+    """
+    Fetch existing data for a specific ticker from DuckDB.
+
+    Args:
+        conn: DuckDB connection.
+        ticker: Ticker symbol.
+
+    Returns:
+        dict: Existing date-price pairs for the ticker.
+    """
+    query = "SELECT date, price FROM etf_data WHERE ticker = ? ORDER BY date"
+    result = conn.execute(query, [ticker]).fetchall()
+    return {str(row[0]): row[1] for row in result}
+
 
 def fetch_historical_etf_data(conn, ticker, start_date, end_date):
     """
@@ -73,49 +91,6 @@ def fetch_historical_etf_data(conn, ticker, start_date, end_date):
         print(f"No data available for {ticker}.")
 
 
-def fetch_historical_etf_data(conn, ticker, start_date, end_date):
-    """
-    Fetch historical ETF data and insert it into DuckDB.
-
-    Args:
-        conn: DuckDB connection.
-        ticker: Ticker symbol.
-        start_date: Start date for the data range.
-        end_date: End date for the data range.
-    """
-    print(f"Fetching data for {ticker} from {start_date} to {end_date}...")
-    data = yf.download(ticker, start=start_date, end=end_date)
-
-    # Debug: Print the raw data to identify issues
-    print(f"Raw data for {ticker}:\n{data.head()}")
-
-    if not data.empty:
-        # Use "Adj Close" or fallback to "Close"
-        column = "Adj Close" if "Adj Close" in data.columns else "Close"
-
-        # Reset index to flatten the DataFrame
-        data.reset_index(inplace=True)
-
-        for _, row in data.iterrows():
-            try:
-                date_str = row['Date'].strftime("%Y-%m-%d") if hasattr(row['Date'], "strftime") else str(row['Date'])
-                price = float(row[column])  # Extract the price as a float
-                conn.execute("""
-                    INSERT INTO etf_data (ticker, date, price)
-                    VALUES (?, ?, ?)
-                    ON CONFLICT (ticker, date) DO UPDATE SET price = excluded.price
-                """, (ticker, date_str, price))
-            except Exception as e:
-                print(f"Error processing {ticker} for {row['Date']}: {e}")
-
-        print(f"Data for {ticker} updated successfully.")
-    else:
-        print(f"No data available for {ticker}.")
-
-
-
-
-
 def main():
     """
     Main function to fetch and update ETF historical data.
@@ -143,6 +118,7 @@ def main():
         fetch_historical_etf_data(conn, ticker, start_date, end_date)
 
     conn.close()
+
 
 if __name__ == "__main__":
     main()
