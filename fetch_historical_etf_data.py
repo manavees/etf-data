@@ -6,7 +6,7 @@ from datetime import datetime
 ETF_TICKERS = ["IWDA", "EMIM", "ECAR", "VHYL", "RBOT"]
 START_DATE = "1900-01-01"  # Start date for historical data
 END_DATE = datetime.now().strftime("%Y-%m-%d")  # End date (today)
-OUTPUT_FILE = "etf_historical_data.json"
+JSON_FILE = "etf-data.json"  # The file to update in the repository
 
 def fetch_historical_etf_data(etf_tickers, start_date, end_date):
     """Fetch historical adjusted close data for given ETFs."""
@@ -20,17 +20,29 @@ def fetch_historical_etf_data(etf_tickers, start_date, end_date):
 
     return historical_data
 
-def save_to_json(data, file_name):
-    """Save the historical data to a JSON file."""
+def update_json_file(file_name, new_data):
+    """Update the JSON file with the new historical data."""
+    try:
+        # Load existing data
+        with open(file_name, "r") as json_file:
+            current_data = json.load(json_file)
+    except FileNotFoundError:
+        print(f"{file_name} not found. Creating a new file.")
+        current_data = {}
+
+    # Merge new data
+    for ticker, values in new_data.items():
+        if ticker not in current_data:
+            current_data[ticker] = {}
+        current_data[ticker].update(values)
+
+    # Save the updated data
     with open(file_name, "w") as json_file:
-        json.dump(data, json_file, indent=4)
-    print(f"Data saved to {file_name}")
+        json.dump(current_data, json_file, indent=4)
+
+    print(f"Data updated and saved to {file_name}")
 
 def main():
-    """Main function to fetch and save historical data."""
+    """Main function to fetch and update ETF historical data."""
     print("Fetching historical ETF data...")
-    historical_data = fetch_historical_etf_data(ETF_TICKERS, START_DATE, END_DATE)
-    save_to_json(historical_data, OUTPUT_FILE)
-
-if __name__ == "__main__":
-    main()
+    historical_data = fetch_historical_etf_data(ETF_TICKERS, START_DATE, END
