@@ -118,4 +118,10 @@ def main():
     end_date = datetime.now().strftime("%Y-%m-%d")
 
     print("Fetching historical ETF data...")
-    historical_data = fetch_historical_etf_data(etf_tickers, start_date,
+    historical_data = fetch_historical_etf_data(etf_tickers, start_date, end_date)
+
+    if historical_data:
+        update_json_file(DATA_FILE, historical_data)
+    else:
+        print("No valid data fetched. Exiting without updating the file.")
+
