@@ -52,7 +52,7 @@ def fetch_historical_etf_data(etf_tickers, start_date, end_date):
             print(f"Raw data for {ticker}:\n{data}")  # Debugging output
 
             if not data.empty:
-                # Extract the "Close" or "Adj Close" column
+                # Extract the "Adj Close" or "Close" column
                 if "Adj Close" in data.columns:
                     selected_data = data["Adj Close"]
                 elif "Close" in data.columns:
@@ -64,7 +64,7 @@ def fetch_historical_etf_data(etf_tickers, start_date, end_date):
                 # Convert the data to the desired format
                 historical_data[ticker] = {
                     date.strftime("%Y-%m-%d"): float(price)
-                    for date, price in selected_data.items()
+                    for date, price in zip(selected_data.index, selected_data.values)
                     if not pd.isna(price)
                 }
             else:
