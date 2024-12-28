@@ -42,11 +42,14 @@ function plotData(data, ticker, range) {
   const rangeStart = getRangeStart(range);
   const filteredData = Object.entries(data[ticker])
     .map(([date, price]) => ({ x: new Date(date), y: parseFloat(price).toFixed(2) }))
-    .filter((item) => item.x >= rangeStart || range === "1m" || range === "6m"); // Keep all dates for 1m and 6m
+    .filter((item) => item.x >= rangeStart);
 
   const ctx = document.createElement("canvas");
   chartContainer.innerHTML = "";
   chartContainer.appendChild(ctx);
+
+  // Determine the time unit for x-axis labels
+  const timeUnit = range === "1m" ? "day" : range === "6m" ? "week" : "month";
 
   chartInstance = new Chart(ctx, {
     type: "line",
@@ -70,7 +73,7 @@ function plotData(data, ticker, range) {
         x: {
           type: "time",
           time: {
-            unit: "day",
+            unit: timeUnit,
           },
           ticks: {
             color: getComputedStyle(document.body).getPropertyValue("--text-color"),
