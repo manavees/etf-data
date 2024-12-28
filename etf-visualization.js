@@ -53,7 +53,21 @@ function filterDataByRange(data, range) {
       filteredData[date] = price;
     }
   }
-  return filteredData;
+
+  return sampleData(filteredData, 200); // Limit to 200 points for better visualization
+}
+
+function sampleData(data, maxPoints) {
+  const keys = Object.keys(data);
+  const values = Object.values(data);
+  const step = Math.ceil(keys.length / maxPoints);
+  const sampledData = {};
+
+  for (let i = 0; i < keys.length; i += step) {
+    sampledData[keys[i]] = values[i];
+  }
+
+  return sampledData;
 }
 
 function plotData(ticker, data) {
@@ -135,10 +149,10 @@ function toggleTheme() {
 
   if (body.classList.contains("dark-mode")) {
     body.classList.replace("dark-mode", "light-mode");
-    toggleButton.textContent = "🌙"; // Moon icon for dark mode
+    toggleButton.textContent = "🌙";
   } else {
     body.classList.replace("light-mode", "dark-mode");
-    toggleButton.textContent = "☀️"; // Sun icon for light mode
+    toggleButton.textContent = "☀️";
   }
 }
 
@@ -147,14 +161,8 @@ async function initialize() {
 
   const tickerSelect = document.getElementById("ticker-select");
   const rangeSelect = document.getElementById("range-select");
-  const themeToggle = document.getElementById("theme-toggle");
 
-  if (Object.keys(data).length === 0) {
-    console.error("No tickers found in the fetched data!");
-    return;
-  }
-
-  // Populate the ticker dropdown
+  // Populate ticker dropdown
   Object.keys(data).forEach((ticker) => {
     const option = document.createElement("option");
     option.value = ticker;
@@ -162,13 +170,10 @@ async function initialize() {
     tickerSelect.appendChild(option);
   });
 
-  console.log("Tickers:", Object.keys(data));
-
   // Set default ticker and range
   const defaultTicker = Object.keys(data)[0];
   tickerSelect.value = defaultTicker;
 
-  // Plot the default ticker and range
   plotData(defaultTicker, filterDataByRange(data[defaultTicker], "max"));
 
   // Event listeners
@@ -184,5 +189,5 @@ async function initialize() {
     plotData(selectedTicker, filterDataByRange(data[selectedTicker], selectedRange));
   });
 
-  themeToggle.addEventListener("click", toggleTheme);
+  document.getElementById("theme-toggle").addEventListener("click", toggleTheme);
 }
