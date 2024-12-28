@@ -52,14 +52,14 @@ def fetch_historical_etf_data(etf_tickers, start_date, end_date):
             data = yf.download(ticker, start=start_date, end=end_date)
             if not data.empty:
                 if "Adj Close" in data.columns:
+                    # Convert 'Adj Close' Series to dictionary with string keys
                     historical_data[ticker] = {
-                        (date.strftime("%Y-%m-%d") if not isinstance(date, str) else date): price
-                        for date, price in data['Adj Close'].items()
+                        str(date): price for date, price in data['Adj Close'].to_dict().items()
                     }
                 elif "Close" in data.columns:
+                    # Convert 'Close' Series to dictionary with string keys
                     historical_data[ticker] = {
-                        (date.strftime("%Y-%m-%d") if not isinstance(date, str) else date): price
-                        for date, price in data['Close'].items()
+                        str(date): price for date, price in data['Close'].to_dict().items()
                     }
                 else:
                     print(f"Warning: No 'Adj Close' or 'Close' data found for {ticker}. Skipping.")
@@ -69,6 +69,7 @@ def fetch_historical_etf_data(etf_tickers, start_date, end_date):
             print(f"Error fetching data for {ticker}: {e}")
 
     return historical_data
+
 
 
 def update_json_file(file_name, new_data):
