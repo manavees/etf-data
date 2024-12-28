@@ -1,162 +1,91 @@
-document.addEventListener("DOMContentLoaded", initialize);
+const chartContainer = document.getElementById("chart-container");
+const tickerSelect = document.getElementById("ticker-select");
+const rangeSelect = document.getElementById("range-select");
+const themeToggle = document.getElementById("theme-toggle");
+let chartInstance;
 
-let chart; // Declare a global variable for the chart instance
+// Fetch ETF data and initialize the visualization
+async function initialize() {
+  const response = await fetch("etf-data.json");
+  const data = await response.json();
 
-async function fetchData() {
-  try {
-    const response = await fetch("etf-data.json");
-    if (!response.ok) throw new Error("Failed to fetch etf-data.json");
-    const data = await response.json();
-    console.log("Fetched Data:", data);
-    return data;
-  } catch (error) {
-    console.error("Error fetching data:", error);
-    return {};
-  }
+  console.log("Fetched Data:", data);
+
+  const tickers = Object.keys(data);
+  console.log("Tickers:", tickers);
+
+  // Populate the dropdown with tickers
+  tickerSelect.innerHTML = tickers
+    .map((ticker) => `<option value="${ticker}">${ticker}</option>`)
+    .join("");
+
+  // Default ticker selection
+  const defaultTicker = tickers[0];
+  tickerSelect.value = defaultTicker;
+
+  // Plot the default ticker data
+  plotData(data, defaultTicker, "max");
+
+  // Add event listeners
+  tickerSelect.addEventListener("change", () =>
+    plotData(data, tickerSelect.value, rangeSelect.value)
+  );
+  rangeSelect.addEventListener("change", () =>
+    plotData(data, tickerSelect.value, rangeSelect.value)
+  );
 }
 
-function filterDataByRange(data, range) {
-  const today = new Date();
-  let cutoffDate;
+// Plot data for the selected ticker and range
+function plotData(data, ticker, range) {
+  if (chartInstance) chartInstance.destroy();
 
-  switch (range) {
-    case "1m":
-      cutoffDate = new Date(today.setMonth(today.getMonth() - 1));
-      return filterData(data, cutoffDate, false);
-    case "6m":
-      cutoffDate = new Date(today.setMonth(today.getMonth() - 6));
-      return filterData(data, cutoffDate, false);
-    case "1y":
-      cutoffDate = new Date(today.setFullYear(today.getFullYear() - 1));
-      return filterData(data, cutoffDate, true);
-    case "2y":
-      cutoffDate = new Date(today.setFullYear(today.getFullYear() - 2));
-      return filterData(data, cutoffDate, true);
-    case "3y":
-      cutoffDate = new Date(today.setFullYear(today.getFullYear() - 3));
-      return filterData(data, cutoffDate, true);
-    case "5y":
-      cutoffDate = new Date(today.setFullYear(today.getFullYear() - 5));
-      return filterData(data, cutoffDate, true);
-    case "10y":
-      cutoffDate = new Date(today.setFullYear(today.getFullYear() - 10));
-      return filterData(data, cutoffDate, true);
-    case "max":
-    default:
-      return sampleData(data, 300);
-  }
-}
+  const rangeStart = getRangeStart(range);
+  const filteredData = Object.entries(data[ticker])
+    .map(([date, price]) => ({ x: new Date(date), y: parseFloat(price).toFixed(2) }))
+    .filter((item) => item.x >= rangeStart);
 
-function filterData(data, cutoffDate, sample) {
-  const filteredData = {};
-  for (const [date, price] of Object.entries(data)) {
-    if (new Date(date) >= cutoffDate) {
-      filteredData[date] = price;
-    }
-  }
-  return sample ? sampleData(filteredData, 300) : filteredData;
-}
+  const ctx = document.createElement("canvas");
+  chartContainer.innerHTML = "";
+  chartContainer.appendChild(ctx);
 
-function sampleData(data, maxPoints) {
-  const keys = Object.keys(data);
-  const values = Object.values(data);
-
-  const step = Math.ceil(keys.length / maxPoints);
-  const sampledData = {};
-
-  for (let i = 0; i < keys.length; i += step) {
-    sampledData[keys[i]] = values[i];
-  }
-
-  return sampledData;
-}
-
-function plotData(ticker, data) {
-  const chartContainer = document.getElementById("chart-container");
-  if (!chartContainer) {
-    console.error("Error: #chart-container element not found in the DOM!");
-    return;
-  }
-
-  chartContainer.innerHTML = ""; // Clear any previous chart
-
-  const canvas = document.createElement("canvas");
-  canvas.id = "chart";
-  chartContainer.appendChild(canvas);
-
-  const labels = Object.keys(data);
-  const prices = Object.values(data);
-
-  // Get the current theme colors
-  const textColor = getComputedStyle(document.body).getPropertyValue("--text-color");
-  const gridColor = getComputedStyle(document.body).getPropertyValue("--grid-color");
-
-  chart = new Chart(canvas.getContext("2d"), {
+  chartInstance = new Chart(ctx, {
     type: "line",
     data: {
-      labels: labels,
       datasets: [
         {
-          label: `${ticker} Price`,
-          data: prices,
+          label: ticker,
+          data: filteredData,
           borderColor: "rgba(75, 192, 192, 1)",
           borderWidth: 2,
-          tension: 0.4,
-          pointRadius: labels.length <= 200 ? 3 : 0,
-          fill: false,
+          tension: 0.3,
+          pointRadius: 0,
+          hoverRadius: 5,
         },
       ],
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: {
-        tooltip: {
-          enabled: true,
-          callbacks: {
-            label: (context) => {
-              const date = context.label;
-              const price = context.raw;
-              return `Date: ${date}, Price: ${price}`;
-            },
-          },
-        },
-        legend: {
-          display: true,
-          labels: {
-            color: textColor,
-          },
-        },
-      },
       scales: {
         x: {
           type: "time",
           time: {
-            unit: "day",
-          },
-          title: {
-            display: true,
-            text: "Date",
-            color: textColor,
+            unit: "month",
           },
           ticks: {
-            color: textColor,
-          },
-          grid: {
-            color: gridColor,
+            color: getComputedStyle(document.body).getPropertyValue("--text-color"),
           },
         },
         y: {
-          title: {
-            display: true,
-            text: "Price",
-            color: textColor,
-          },
           ticks: {
-            color: textColor,
+            color: getComputedStyle(document.body).getPropertyValue("--text-color"),
           },
-          grid: {
-            color: gridColor,
+        },
+      },
+      plugins: {
+        legend: {
+          labels: {
+            color: getComputedStyle(document.body).getPropertyValue("--text-color"),
           },
         },
       },
@@ -164,67 +93,52 @@ function plotData(ticker, data) {
   });
 }
 
-function updateChartTheme() {
-  if (chart) {
-    const textColor = getComputedStyle(document.body).getPropertyValue("--text-color");
-    const gridColor = getComputedStyle(document.body).getPropertyValue("--grid-color");
-
-    chart.options.plugins.legend.labels.color = textColor;
-    chart.options.scales.x.title.color = textColor;
-    chart.options.scales.x.ticks.color = textColor;
-    chart.options.scales.x.grid.color = gridColor;
-    chart.options.scales.y.title.color = textColor;
-    chart.options.scales.y.ticks.color = textColor;
-    chart.options.scales.y.grid.color = gridColor;
-
-    chart.update();
+// Get range start date
+function getRangeStart(range) {
+  const now = new Date();
+  switch (range) {
+    case "1m":
+      return new Date(now.setMonth(now.getMonth() - 1));
+    case "6m":
+      return new Date(now.setMonth(now.getMonth() - 6));
+    case "1y":
+      return new Date(now.setFullYear(now.getFullYear() - 1));
+    case "2y":
+      return new Date(now.setFullYear(now.getFullYear() - 2));
+    case "3y":
+      return new Date(now.setFullYear(now.getFullYear() - 3));
+    case "4y":
+      return new Date(now.setFullYear(now.getFullYear() - 4));
+    case "5y":
+      return new Date(now.setFullYear(now.getFullYear() - 5));
+    case "10y":
+      return new Date(now.setFullYear(now.getFullYear() - 10));
+    case "max":
+    default:
+      return new Date("1900-01-01");
   }
 }
 
-function toggleTheme() {
-  const body = document.body;
-  const toggleButton = document.getElementById("theme-toggle");
+// Toggle dark/light mode
+themeToggle.addEventListener("click", () => {
+  document.body.classList.toggle("dark-mode");
+  document.body.classList.toggle("light-mode");
+  themeToggle.textContent = document.body.classList.contains("dark-mode") ? "☀️" : "🌙";
 
-  if (body.classList.contains("dark-mode")) {
-    body.classList.replace("dark-mode", "light-mode");
-    toggleButton.textContent = "🌙";
-  } else {
-    body.classList.replace("light-mode", "dark-mode");
-    toggleButton.textContent = "☀️";
+  // Update axis and legend colors
+  if (chartInstance) {
+    chartInstance.options.scales.x.ticks.color = getComputedStyle(
+      document.body
+    ).getPropertyValue("--text-color");
+    chartInstance.options.scales.y.ticks.color = getComputedStyle(
+      document.body
+    ).getPropertyValue("--text-color");
+    chartInstance.options.plugins.legend.labels.color = getComputedStyle(
+      document.body
+    ).getPropertyValue("--text-color");
+    chartInstance.update();
   }
+});
 
-  updateChartTheme(); // Update chart colors dynamically
-}
-
-async function initialize() {
-  const data = await fetchData();
-
-  const tickerSelect = document.getElementById("ticker-select");
-  const rangeSelect = document.getElementById("range-select");
-
-  Object.keys(data).forEach((ticker) => {
-    const option = document.createElement("option");
-    option.value = ticker;
-    option.textContent = ticker;
-    tickerSelect.appendChild(option);
-  });
-
-  const defaultTicker = Object.keys(data)[0];
-  tickerSelect.value = defaultTicker;
-
-  plotData(defaultTicker, filterDataByRange(data[defaultTicker], "max"));
-
-  tickerSelect.addEventListener("change", () => {
-    const selectedTicker = tickerSelect.value;
-    const selectedRange = rangeSelect.value;
-    plotData(selectedTicker, filterDataByRange(data[selectedTicker], selectedRange));
-  });
-
-  rangeSelect.addEventListener("change", () => {
-    const selectedTicker = tickerSelect.value;
-    const selectedRange = rangeSelect.value;
-    plotData(selectedTicker, filterDataByRange(data[selectedTicker], selectedRange));
-  });
-
-  document.getElementById("theme-toggle").addEventListener("click", toggleTheme);
-}
+// Initialize the visualization
+initialize();
