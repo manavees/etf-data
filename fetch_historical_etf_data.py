@@ -4,16 +4,48 @@ from datetime import datetime
 
 # ETF tickers and date range
 ETF_TICKERS = ["IWDA", "EMIM", "ECAR", "VHYL", "RBOT"]
-START_DATE = "1900-01-01"  # Start date for historical data
-END_DATE = datetime.now().strftime("%Y-%m-%d")  # End date (today)
-JSON_FILE = "etf-data.json"  # The file to update in the repository
+JSON_FILE = "etf-data.json"
+DEFAULT_START_DATE = "2015-01-01"  # Default start date if no data exists
+
+def get_latest_date_from_file(file_name):
+    """
+    Get the latest date from the existing JSON file.
+
+    Args:
+        file_name (str): The name of the JSON file to read.
+
+    Returns:
+        str: The latest date in the file, formatted as 'YYYY-MM-DD'.
+             If the file doesn't exist or is invalid, returns DEFAULT_START_DATE.
+    """
+    try:
+        # Load the JSON file
+        with open(file_name, "r") as json_file:
+            current_data = json.load(json_file)
+
+        # Extract the latest date for each ETF
+        latest_dates = [
+            max(map(datetime.strptime, data.keys())) for data in current_data.values()
+        ]
+
+        # Return the latest date across all ETFs
+        return max(latest_dates).strftime("%Y-%m-%d")
+
+    except (FileNotFoundError, ValueError):
+        # Default to DEFAULT_START_DATE if the file is missing or invalid
+        print(f"{file_name} not found or invalid. Defaulting to DEFAULT_START_DATE.")
+        return DEFAULT_START_DATE
+
+# Dynamically adjust START_DATE based on the latest date in the file
+START_DATE = get_latest_date_from_file(JSON_FILE)
+END_DATE = datetime.now().strftime("%Y-%m-%d")  # End date is always today
 
 def fetch_historical_etf_data(etf_tickers, start_date, end_date):
     """Fetch historical adjusted close data for given ETFs."""
     historical_data = {}
 
     for ticker in etf_tickers:
-        print(f"Fetching data for {ticker}...")
+        print(f"Fetching data for {ticker} from {start_date} to {end_date}...")
         data = yf.download(ticker, start=start_date, end=end_date)
         if not data.empty:
             historical_data[ticker] = data['Adj Close'].to_dict()
@@ -45,4 +77,8 @@ def update_json_file(file_name, new_data):
 def main():
     """Main function to fetch and update ETF historical data."""
     print("Fetching historical ETF data...")
-    historical_data = fetch_historical_etf_data(ETF_TICKERS, START_DATE, END
+    historical_data = fetch_historical_etf_data(ETF_TICKERS, START_DATE, END_DATE)
+    update_json_file(JSON_FILE, historical_data)
+
+if __name__ == "__main__":
+    main()
