@@ -1,10 +1,26 @@
 import yfinance as yf
 import duckdb
-import json  # Add this import
+import json
 from datetime import datetime
 
 # Define database file
 db_file = "etf-data.duckdb"
+
+def initialize_duckdb():
+    """
+    Initialize the DuckDB database with the required schema.
+    """
+    conn = duckdb.connect(db_file)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS etf_data (
+            ticker VARCHAR,
+            date DATE,
+            price DOUBLE,
+            PRIMARY KEY (ticker, date)
+        )
+    """)
+    conn.close()
+    print(f"Database {db_file} initialized successfully.")
 
 def fetch_existing_data(conn, ticker):
     """
@@ -24,7 +40,7 @@ def fetch_existing_data(conn, ticker):
 def fetch_historical_etf_data(conn, ticker, start_date, end_date):
     """
     Fetch historical ETF data and insert it into DuckDB.
-    
+
     Args:
         conn: DuckDB connection.
         ticker: Ticker symbol.
@@ -47,21 +63,31 @@ def fetch_historical_etf_data(conn, ticker, start_date, end_date):
         print(f"No data available for {ticker}.")
 
 def main():
-    """Main function to fetch and update ETF historical data."""
+    """
+    Main function to fetch and update ETF historical data.
+    """
+    # Initialize the database if not already set up
+    initialize_duckdb()
+
+    # Connect to DuckDB
     conn = duckdb.connect(db_file)
-    
+
     # Load tickers from etf-tickers.json
     with open("etf-tickers.json", "r") as file:
         tickers = json.load(file).get("tickers", [])
-    
+
     end_date = datetime.now().strftime("%Y-%m-%d")
-    
+
     for ticker in tickers:
         # Fetch existing data to determine the start date
         existing_data = fetch_existing_data(conn, ticker)
-        start_date = max(existing_data.keys()) if existing_data else "1900-01-01"
+        start_date = (
+            max(existing_data.keys()).strftime("%Y-%m-%d")
+            if existing_data
+            else "1900-01-01"
+        )
         fetch_historical_etf_data(conn, ticker, start_date, end_date)
-    
+
     conn.close()
 
 if __name__ == "__main__":
