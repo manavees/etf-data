@@ -1,135 +1,133 @@
-document.addEventListener("DOMContentLoaded", async () => {
-    const apiUrl = "etf-data.json";
-    const chartContainer = document.getElementById("chart-container");
-    const tickerSelector = document.getElementById("ticker-selector");
-    const rangeSelector = document.getElementById("range-selector");
-    const themeToggle = document.getElementById("theme-toggle");
+const etfDataUrl = "etf-data.json";
 
-    let currentChart;
+async function fetchEtfData() {
+  const response = await fetch(etfDataUrl);
+  return response.json();
+}
 
-    async function fetchData() {
-        const response = await fetch(apiUrl);
-        const data = await response.json();
-        console.log("Fetched Data:", data);
-        return data;
-    }
+function initialize(data) {
+  const tickers = Object.keys(data);
+  console.log("Fetched Data:", data);
+  console.log("Tickers:", tickers);
 
-    function plotData(data, ticker, range) {
-        if (currentChart) {
-            currentChart.destroy();
-        }
+  const tickerSelect = document.getElementById("ticker-select");
+  tickers.forEach((ticker) => {
+    const option = document.createElement("option");
+    option.value = ticker;
+    option.textContent = ticker;
+    tickerSelect.appendChild(option);
+  });
 
-        const labels = [];
-        const prices = [];
+  tickerSelect.addEventListener("change", () => {
+    const selectedTicker = tickerSelect.value;
+    plotData(data, selectedTicker, document.getElementById("range-select").value);
+  });
 
-        const startDate = calculateStartDate(range);
+  const rangeSelect = document.getElementById("range-select");
+  rangeSelect.addEventListener("change", () => {
+    const selectedTicker = tickerSelect.value;
+    plotData(data, selectedTicker, rangeSelect.value);
+  });
 
-        for (const [date, price] of Object.entries(data[ticker])) {
-            const parsedDate = new Date(date);
-            if (parsedDate >= startDate) {
-                labels.push(date);
-                prices.push(price);
-            }
-        }
+  // Initialize with the first ticker and max range
+  plotData(data, tickers[0], "max");
 
-        const ctx = document.createElement("canvas");
-        chartContainer.innerHTML = "";
-        chartContainer.appendChild(ctx);
+  const themeToggle = document.getElementById("theme-toggle");
+  themeToggle.addEventListener("click", toggleTheme);
+}
 
-        currentChart = new Chart(ctx, {
-            type: "line",
-            data: {
-                labels,
-                datasets: [
-                    {
-                        label: ticker,
-                        data: prices,
-                        borderColor: "rgba(75, 192, 192, 1)",
-                        backgroundColor: "rgba(75, 192, 192, 0.2)",
-                        borderWidth: 2, // Default thickness
-                        pointRadius: 0,
-                    },
-                ],
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    tooltip: {
-                        enabled: true,
-                    },
-                    legend: {
-                        display: false,
-                    },
-                },
-                scales: {
-                    x: {
-                        ticks: {
-                            color: "#000", // Static color for axes
-                        },
-                        grid: {
-                            display: false,
-                        },
-                    },
-                    y: {
-                        ticks: {
-                            color: "#000",
-                        },
-                        grid: {
-                            color: "#e0e0e0",
-                        },
-                    },
-                },
-            },
-        });
-    }
+function toggleTheme() {
+  const body = document.body;
+  if (body.classList.contains("dark-mode")) {
+    body.classList.remove("dark-mode");
+    body.classList.add("light-mode");
+    this.textContent = "🌙";
+  } else {
+    body.classList.remove("light-mode");
+    body.classList.add("dark-mode");
+    this.textContent = "☀️";
+  }
+}
 
-    function calculateStartDate(range) {
-        const today = new Date();
-        switch (range) {
-            case "1M":
-                return new Date(today.setMonth(today.getMonth() - 1));
-            case "6M":
-                return new Date(today.setMonth(today.getMonth() - 6));
-            case "1Y":
-                return new Date(today.setFullYear(today.getFullYear() - 1));
-            case "2Y":
-                return new Date(today.setFullYear(today.getFullYear() - 2));
-            case "3Y":
-                return new Date(today.setFullYear(today.getFullYear() - 3));
-            case "5Y":
-                return new Date(today.setFullYear(today.getFullYear() - 5));
-            case "10Y":
-                return new Date(today.setFullYear(today.getFullYear() - 10));
-            default:
-                return new Date(1900, 0, 1);
-        }
-    }
+function plotData(data, ticker, range) {
+  const chartContainer = document.getElementById("chart-container");
+  chartContainer.innerHTML = ""; // Clear existing canvas
 
-    function initialize(data) {
-        const tickers = Object.keys(data);
-        console.log("Tickers:", tickers);
+  const canvas = document.createElement("canvas");
+  chartContainer.appendChild(canvas);
 
-        tickerSelector.innerHTML = tickers
-            .map((ticker) => `<option value="${ticker}">${ticker}</option>`)
-            .join("");
+  const rawData = data[ticker];
+  const labels = Object.keys(rawData).map((date) => new Date(date));
+  const values = Object.values(rawData);
 
-        tickerSelector.addEventListener("change", () => {
-            const selectedTicker = tickerSelector.value;
-            const selectedRange = rangeSelector.value;
-            plotData(data, selectedTicker, selectedRange);
-        });
+  // Filter data based on range
+  const now = new Date();
+  let filteredLabels = labels;
+  let filteredValues = values;
 
-        rangeSelector.addEventListener("change", () => {
-            const selectedTicker = tickerSelector.value;
-            const selectedRange = rangeSelector.value;
-            plotData(data, selectedTicker, selectedRange);
-        });
+  if (range !== "max") {
+    const rangeMap = {
+      "10y": 10,
+      "5y": 5,
+      "4y": 4,
+      "3y": 3,
+      "2y": 2,
+      "1y": 1,
+      "6m": 0.5,
+      "1m": 1 / 12,
+    };
+    const cutoff = new Date(now);
+    cutoff.setFullYear(now.getFullYear() - (rangeMap[range] || 0));
+    cutoff.setMonth(now.getMonth() - (range === "6m" ? 6 : 0));
+    filteredLabels = labels.filter((date) => date >= cutoff);
+    filteredValues = values.slice(labels.length - filteredLabels.length);
+  }
 
-        // Initialize with the first ticker and default range
-        plotData(data, tickers[0], "1M");
-    }
+  new Chart(canvas.getContext("2d"), {
+    type: "line",
+    data: {
+      labels: filteredLabels,
+      datasets: [
+        {
+          label: ticker,
+          data: filteredValues,
+          borderColor: "#4caf50",
+          borderWidth: 2,
+          fill: false,
+          tension: 0.4, // Smoothing
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false,
+        },
+        tooltip: {
+          mode: "index",
+          intersect: false,
+        },
+      },
+      scales: {
+        x: {
+          type: "time",
+          time: {
+            unit: "month",
+          },
+          ticks: {
+            color: getComputedStyle(document.body).getPropertyValue("--text-color"),
+          },
+        },
+        y: {
+          ticks: {
+            color: getComputedStyle(document.body).getPropertyValue("--text-color"),
+          },
+        },
+      },
+    },
+  });
+}
 
-    const data = await fetchData();
-    initialize(data);
-});
+fetchEtfData().then(initialize);
