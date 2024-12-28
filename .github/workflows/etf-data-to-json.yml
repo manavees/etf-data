@@ -1,0 +1,49 @@
+name: Export ETF Data to JSON
+
+on:
+  workflow_dispatch:  # Allows manual triggering of the workflow
+
+jobs:
+  export-to-json:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+
+    - name: Set Up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'  # Adjust if needed
+
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install duckdb pandas
+
+    - name: Export ETF Data to JSON
+      run: |
+        python - <<EOF
+        import duckdb
+        import json
+
+        conn = duckdb.connect("etf-data.duckdb")
+        data = {}
+
+        # Fetch data for all tickers
+        tickers = conn.execute("SELECT DISTINCT ticker FROM etf_data").fetchall()
+        for ticker, in tickers:
+            result = conn.execute(f"SELECT date, price FROM etf_data WHERE ticker = '{ticker}' ORDER BY date").fetchall()
+            data[ticker] = {str(row[0]): row[1] for row in result}
+
+        # Write to JSON
+        with open("etf-data.json", "w") as f:
+            json.dump(data, f, indent=4)
+        conn.close()
+        EOF
+
+    - name: Upload JSON File as Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: etf-data-json
+        path: etf-data.json
