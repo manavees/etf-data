@@ -44,7 +44,7 @@ function filterDataByRange(data, range) {
       break;
     case "max":
     default:
-      return data; // Return all data
+      return sampleData(data, 200); // Sample data for "Max"
   }
 
   const filteredData = {};
@@ -54,12 +54,14 @@ function filterDataByRange(data, range) {
     }
   }
 
-  return sampleData(filteredData, 200); // Limit to 200 points for better visualization
+  return sampleData(filteredData, 200); // Sample data to smooth
 }
 
 function sampleData(data, maxPoints) {
   const keys = Object.keys(data);
   const values = Object.values(data);
+
+  // Calculate the step to sample evenly spaced points
   const step = Math.ceil(keys.length / maxPoints);
   const sampledData = {};
 
@@ -96,8 +98,8 @@ function plotData(ticker, data) {
           data: prices,
           borderColor: "rgba(75, 192, 192, 1)",
           borderWidth: 2,
-          tension: 0.4, // Add smoothing to the line
-          pointBackgroundColor: "rgba(255, 255, 255, 0.8)",
+          tension: 0.4, // Smooth line
+          pointRadius: 0, // Hide individual points for smoother appearance
           fill: false,
         },
       ],
