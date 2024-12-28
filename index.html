@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ETF Data Visualization</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script> <!-- Date adapter -->
 </head>
 <body>
   <h1>ETF Data Visualization</h1>
@@ -15,24 +16,23 @@
   <canvas id="etf-chart" width="800" height="400"></canvas>
 
   <script>
-    let chartInstance = null; // Store the current chart instance
+    let chartInstance = null;
 
-    // Function to fetch ETF data from etf-data.json
     async function fetchETFData() {
       try {
-        const response = await fetch('./etf-data.json'); // Use relative path
+        const response = await fetch('./etf-data.json');
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
-        console.log("Fetched Data:", data); // Debug log
+        console.log("Fetched Data:", data);
         return data;
       } catch (error) {
         console.error("Error fetching ETF data:", error);
       }
     }
 
-    // Populate the dropdown with tickers
     function populateSelectBox(tickers) {
       const select = document.getElementById('ticker-select');
+      select.innerHTML = ""; // Clear any existing options
       tickers.forEach(ticker => {
         const option = document.createElement('option');
         option.value = ticker;
@@ -41,16 +41,18 @@
       });
     }
 
-    // Plot the data using Chart.js
     function plotData(ticker, data) {
+      if (!data || Object.keys(data).length === 0) {
+        console.warn(`No data available for ticker: ${ticker}`);
+        return;
+      }
+
       const ctx = document.getElementById('etf-chart').getContext('2d');
       const dates = Object.keys(data).sort();
       const prices = dates.map(date => data[date]);
 
-      // Destroy the previous chart instance if it exists
       if (chartInstance) chartInstance.destroy();
 
-      // Create a new chart
       chartInstance = new Chart(ctx, {
         type: 'line',
         data: {
@@ -65,11 +67,17 @@
         },
         options: {
           responsive: true,
+          plugins: {
+            title: {
+              display: true,
+              text: `Historical Prices for ${ticker}`,
+            },
+          },
           scales: {
             x: {
-              type: 'time',
+              type: 'time', // Time scale for dates
               time: {
-                unit: 'month',
+                unit: 'month', // Adjust as needed
               },
               title: {
                 display: true,
@@ -87,26 +95,28 @@
       });
     }
 
-    // Main function to initialize visualization
     async function main() {
       console.log("Initializing visualization...");
       const data = await fetchETFData();
-      if (!data) {
-        console.error("No data fetched!");
+
+      if (!data || Object.keys(data).length === 0) {
+        console.error("No data fetched or the data is empty.");
         return;
       }
-      const tickers = Object.keys(data);
 
-      // Populate dropdown with tickers
+      const tickers = Object.keys(data);
+      if (tickers.length === 0) {
+        console.error("No tickers found in the data.");
+        return;
+      }
+
       console.log("Tickers:", tickers);
       populateSelectBox(tickers);
 
-      // Default plot for the first ticker
       const defaultTicker = tickers[0];
       console.log("Default Ticker:", defaultTicker);
       plotData(defaultTicker, data[defaultTicker]);
 
-      // Update plot on ticker selection
       document.getElementById('ticker-select').addEventListener('change', (event) => {
         const selectedTicker = event.target.value;
         console.log("Selected Ticker:", selectedTicker);
