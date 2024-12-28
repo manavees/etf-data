@@ -1,9 +1,17 @@
 // Fetch the JSON data and initialize visualization
 async function fetchData() {
-  const response = await fetch("etf-data.json");
-  const data = await response.json();
-  return data;
+  try {
+    const response = await fetch("etf-data.json");
+    if (!response.ok) throw new Error("Failed to fetch etf-data.json");
+    const data = await response.json();
+    console.log("Fetched Data:", data); // Debugging
+    return data;
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    return {};
+  }
 }
+
 
 // Filter data based on the selected time range
 function filterDataByRange(data, range) {
@@ -94,12 +102,15 @@ function plotData(ticker, data) {
   });
 }
 
-// Initialize the application
 async function initialize() {
   const data = await fetchData();
 
   const tickerSelect = document.getElementById("ticker-select");
-  const timeRangeSelect = document.getElementById("time-range-select");
+
+  if (Object.keys(data).length === 0) {
+    console.error("No tickers found in the fetched data!");
+    return;
+  }
 
   // Populate the ticker dropdown
   Object.keys(data).forEach((ticker) => {
@@ -109,10 +120,17 @@ async function initialize() {
     tickerSelect.appendChild(option);
   });
 
-  // Default ticker
+  console.log("Tickers:", Object.keys(data)); // Debugging
+
+  // Default to the first ticker
   const defaultTicker = Object.keys(data)[0];
   plotData(defaultTicker, data[defaultTicker]);
 
   // Add event listeners for dropdowns
   tickerSelect.addEventListener("change", () => {
-    const selectedTicker = tic
+    const selectedTicker = tickerSelect.value;
+    const filteredData = filterDataByRange(data[selectedTicker], "max");
+    plotData(selectedTicker, filteredData);
+  });
+}
+
