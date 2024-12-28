@@ -53,12 +53,12 @@ def fetch_historical_etf_data(etf_tickers, start_date, end_date):
             if not data.empty:
                 if "Adj Close" in data.columns:
                     historical_data[ticker] = {
-                        date.strftime("%Y-%m-%d"): price
+                        (date.strftime("%Y-%m-%d") if not isinstance(date, str) else date): price
                         for date, price in data['Adj Close'].items()
                     }
                 elif "Close" in data.columns:
                     historical_data[ticker] = {
-                        date.strftime("%Y-%m-%d"): price
+                        (date.strftime("%Y-%m-%d") if not isinstance(date, str) else date): price
                         for date, price in data['Close'].items()
                     }
                 else:
@@ -69,6 +69,7 @@ def fetch_historical_etf_data(etf_tickers, start_date, end_date):
             print(f"Error fetching data for {ticker}: {e}")
 
     return historical_data
+
 
 def update_json_file(file_name, new_data):
     """Update the JSON file with the new historical data."""
