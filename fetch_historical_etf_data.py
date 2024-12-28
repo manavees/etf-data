@@ -55,13 +55,13 @@ def fetch_historical_etf_data(etf_tickers, start_date, end_date):
                 if "Adj Close" in data.columns:
                     # Convert the index (dates) to strings
                     historical_data[ticker] = {
-                        date.strftime("%Y-%m-%d"): price
+                        (date.strftime("%Y-%m-%d") if hasattr(date, "strftime") else date): price
                         for date, price in data['Adj Close'].items()
                     }
                 elif "Close" in data.columns:
                     # Convert the index (dates) to strings
                     historical_data[ticker] = {
-                        date.strftime("%Y-%m-%d"): price
+                        (date.strftime("%Y-%m-%d") if hasattr(date, "strftime") else date): price
                         for date, price in data['Close'].items()
                     }
                 else:
@@ -72,6 +72,7 @@ def fetch_historical_etf_data(etf_tickers, start_date, end_date):
             print(f"Error fetching data for {ticker}: {e}")
 
     return historical_data
+
 
 
 
