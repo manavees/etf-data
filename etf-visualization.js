@@ -67,6 +67,7 @@ function plotData(ticker, data) {
           data: prices,
           borderColor: "rgba(75, 192, 192, 1)",
           borderWidth: 2,
+          pointBackgroundColor: "rgba(255, 255, 255, 0.8)",
           fill: false,
         },
       ],
