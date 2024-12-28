@@ -4,30 +4,61 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ETF Data Visualization</title>
-  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #121212;
+      color: #ffffff;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    h1 {
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    #controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    select {
+      padding: 8px;
+      border-radius: 4px;
+      border: none;
+      font-size: 16px;
+    }
+
+    #chart-container {
+      width: 90%;
+      max-width: 800px;
+      height: 400px;
+      background-color: #ffffff;
+      padding: 10px;
+      border-radius: 8px;
+    }
+  </style>
 </head>
 <body>
   <h1>ETF Data Visualization</h1>
-
   <div id="controls">
-    <label for="ticker-select">Select Ticker:</label>
     <select id="ticker-select"></select>
-
-    <label for="time-range-select">Time Range:</label>
-    <select id="time-range-select">
-      <option value="1m">1 Month</option>
-      <option value="3m">3 Months</option>
+    <select id="range-select">
+      <option value="max">Max</option>
       <option value="1y">1 Year</option>
-      <option value="max" selected>Max</option>
+      <option value="6m">6 Months</option>
+      <option value="1m">1 Month</option>
     </select>
   </div>
-
-  <div id="theme-toggle">
-    <label for="dark-mode-toggle">Dark Mode:</label>
-    <input type="checkbox" id="dark-mode-toggle">
-  </div>
-
-  <canvas id="etf-chart"></canvas>
+  <div id="chart-container" style="height: 400px;"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="etf-visualization.js"></script>
