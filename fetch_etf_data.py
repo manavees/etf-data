@@ -49,20 +49,32 @@ def fetch_historical_etf_data(conn, ticker, start_date, end_date):
     """
     print(f"Fetching data for {ticker} from {start_date} to {end_date}...")
     data = yf.download(ticker, start=start_date, end=end_date)
+    
+    # Debug: Print the data structure to identify issues
+    print(f"Raw data for {ticker}:\n{data.head()}")
+
     if not data.empty:
         # Use "Adj Close" or fallback to "Close"
         column = "Adj Close" if "Adj Close" in data.columns else "Close"
         column_data = data[column].dropna()
-        for date, price in column_data.items():  # Use .items() for Series
-            date_str = date.strftime("%Y-%m-%d") if hasattr(date, "strftime") else str(date)
-            conn.execute("""
-                INSERT INTO etf_data (ticker, date, price)
-                VALUES (?, ?, ?)
-                ON CONFLICT (ticker, date) DO UPDATE SET price = excluded.price
-            """, (ticker, date_str, float(price)))
+
+        # Ensure each price is correctly cast to float
+        for date, price in column_data.items():
+            try:
+                date_str = date.strftime("%Y-%m-%d") if hasattr(date, "strftime") else str(date)
+                price_float = float(price)  # Ensure price is a scalar float value
+                conn.execute("""
+                    INSERT INTO etf_data (ticker, date, price)
+                    VALUES (?, ?, ?)
+                    ON CONFLICT (ticker, date) DO UPDATE SET price = excluded.price
+                """, (ticker, date_str, price_float))
+            except Exception as e:
+                print(f"Error processing {ticker} for {date}: {e}")
+
         print(f"Data for {ticker} updated successfully.")
     else:
         print(f"No data available for {ticker}.")
+
 
 
 
