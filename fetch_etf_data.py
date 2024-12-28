@@ -58,16 +58,18 @@ def fetch_historical_etf_data(etf_tickers, start_date, end_date):
 
             if not data.empty:
                 if "Adj Close" in data.columns:
-                    # Convert the index (dates) to strings and values to floats
+                    # Convert the index (dates) to strings and ensure values are scalars
                     historical_data[ticker] = {
                         (date.strftime("%Y-%m-%d") if hasattr(date, "strftime") else str(date)): float(price)
                         for date, price in data['Adj Close'].items()
+                        if not isinstance(price, pd.Series)
                     }
                 elif "Close" in data.columns:
-                    # Convert the index (dates) to strings and values to floats
+                    # Convert the index (dates) to strings and ensure values are scalars
                     historical_data[ticker] = {
                         (date.strftime("%Y-%m-%d") if hasattr(date, "strftime") else str(date)): float(price)
                         for date, price in data['Close'].items()
+                        if not isinstance(price, pd.Series)
                     }
                 else:
                     print(f"Warning: No 'Adj Close' or 'Close' data found for {ticker}. Skipping.")
@@ -78,6 +80,7 @@ def fetch_historical_etf_data(etf_tickers, start_date, end_date):
             print(f"Error fetching data for {ticker}: {e}")
 
     return historical_data
+a
 
 def update_json_file(file_name, new_data):
     """Update the JSON file with the new historical data."""
