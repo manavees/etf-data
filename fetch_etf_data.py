@@ -35,7 +35,7 @@ def get_latest_date_from_file(file_name):
         # Extract the latest date for each ETF
         latest_dates = [
             max(datetime.strptime(date, "%Y-%m-%d") for date in data.keys())
-            for data in current_data.values()
+            for data in current_data.values() if data
         ]
         return max(latest_dates).strftime("%Y-%m-%d")
     except (FileNotFoundError, ValueError):
@@ -52,21 +52,21 @@ def fetch_historical_etf_data(etf_tickers, start_date, end_date):
             print(f"Raw data for {ticker}:\n{data}")  # Debugging output
 
             if not data.empty:
+                # Extract the "Close" or "Adj Close" column
                 if "Adj Close" in data.columns:
-                    # Convert the index (dates) to strings and ensure values are scalars
-                    historical_data[ticker] = {
-                        (date.strftime("%Y-%m-%d") if hasattr(date, "strftime") else str(date)): float(price)
-                        for date, price in data['Adj Close'].items()
-                        if not isinstance(price, pd.Series)
-                    }
+                    selected_data = data["Adj Close"]
                 elif "Close" in data.columns:
-                    historical_data[ticker] = {
-                        (date.strftime("%Y-%m-%d") if hasattr(date, "strftime") else str(date)): float(price)
-                        for date, price in data['Close'].items()
-                        if not isinstance(price, pd.Series)
-                    }
+                    selected_data = data["Close"]
                 else:
-                    print(f"Warning: No 'Adj Close' or 'Close' data found for {ticker}. Skipping.")
+                    print(f"Warning: No 'Adj Close' or 'Close' column found for {ticker}. Skipping.")
+                    continue
+
+                # Convert the data to the desired format
+                historical_data[ticker] = {
+                    date.strftime("%Y-%m-%d"): float(price)
+                    for date, price in selected_data.items()
+                    if not pd.isna(price)
+                }
             else:
                 print(f"Warning: No data returned for {ticker}. Skipping.")
         except Exception as e:
@@ -86,7 +86,6 @@ def update_json_file(file_name, new_data):
     for ticker, values in new_data.items():
         if ticker not in current_data:
             current_data[ticker] = {}
-        # Ensure all keys are strings and all values are JSON-serializable
         current_data[ticker].update({
             str(k): float(v) for k, v in values.items()
         })
