@@ -35,7 +35,7 @@ def fetch_existing_data(conn, ticker):
     """
     query = "SELECT date, price FROM etf_data WHERE ticker = ? ORDER BY date"
     result = conn.execute(query, [ticker]).fetchall()
-    return {row[0]: row[1] for row in result}
+    return {str(row[0]): row[1] for row in result}
 
 def fetch_historical_etf_data(conn, ticker, start_date, end_date):
     """
@@ -53,11 +53,13 @@ def fetch_historical_etf_data(conn, ticker, start_date, end_date):
         # Use "Adj Close" or fallback to "Close"
         column = "Adj Close" if "Adj Close" in data.columns else "Close"
         for date, price in data[column].dropna().items():
+            # Ensure the date is in string format
+            date_str = date.strftime("%Y-%m-%d") if hasattr(date, "strftime") else date
             conn.execute("""
                 INSERT INTO etf_data (ticker, date, price)
                 VALUES (?, ?, ?)
                 ON CONFLICT (ticker, date) DO UPDATE SET price = excluded.price
-            """, (ticker, date.strftime("%Y-%m-%d"), float(price)))
+            """, (ticker, date_str, float(price)))
         print(f"Data for {ticker} updated successfully.")
     else:
         print(f"No data available for {ticker}.")
@@ -82,7 +84,7 @@ def main():
         # Fetch existing data to determine the start date
         existing_data = fetch_existing_data(conn, ticker)
         start_date = (
-            max(existing_data.keys()).strftime("%Y-%m-%d")
+            max(existing_data.keys())
             if existing_data
             else "1900-01-01"
         )
