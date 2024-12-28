@@ -1,100 +1,109 @@
-const etfDataUrl = "etf-data.json";
+document.addEventListener("DOMContentLoaded", initialize);
 
-async function fetchEtfData() {
-  const response = await fetch(etfDataUrl);
-  return response.json();
-}
+let chart; // Declare a global variable for the chart instance
 
-function initialize(data) {
-  const tickers = Object.keys(data);
-  console.log("Fetched Data:", data);
-  console.log("Tickers:", tickers);
-
-  const tickerSelect = document.getElementById("ticker-select");
-  tickers.forEach((ticker) => {
-    const option = document.createElement("option");
-    option.value = ticker;
-    option.textContent = ticker;
-    tickerSelect.appendChild(option);
-  });
-
-  tickerSelect.addEventListener("change", () => {
-    const selectedTicker = tickerSelect.value;
-    plotData(data, selectedTicker, document.getElementById("range-select").value);
-  });
-
-  const rangeSelect = document.getElementById("range-select");
-  rangeSelect.addEventListener("change", () => {
-    const selectedTicker = tickerSelect.value;
-    plotData(data, selectedTicker, rangeSelect.value);
-  });
-
-  // Initialize with the first ticker and max range
-  plotData(data, tickers[0], "max");
-
-  const themeToggle = document.getElementById("theme-toggle");
-  themeToggle.addEventListener("click", toggleTheme);
-}
-
-function toggleTheme() {
-  const body = document.body;
-  if (body.classList.contains("dark-mode")) {
-    body.classList.remove("dark-mode");
-    body.classList.add("light-mode");
-    this.textContent = "🌙";
-  } else {
-    body.classList.remove("light-mode");
-    body.classList.add("dark-mode");
-    this.textContent = "☀️";
+async function fetchData() {
+  try {
+    const response = await fetch("etf-data.json");
+    if (!response.ok) throw new Error("Failed to fetch etf-data.json");
+    const data = await response.json();
+    console.log("Fetched Data:", data);
+    return data;
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    return {};
   }
 }
 
-function plotData(data, ticker, range) {
+function filterDataByRange(data, range) {
+  const today = new Date();
+  let cutoffDate;
+
+  switch (range) {
+    case "1m":
+      cutoffDate = new Date(today.setMonth(today.getMonth() - 1));
+      return filterData(data, cutoffDate, false);
+    case "6m":
+      cutoffDate = new Date(today.setMonth(today.getMonth() - 6));
+      return filterData(data, cutoffDate, false);
+    case "1y":
+      cutoffDate = new Date(today.setFullYear(today.getFullYear() - 1));
+      return filterData(data, cutoffDate, true);
+    case "2y":
+      cutoffDate = new Date(today.setFullYear(today.getFullYear() - 2));
+      return filterData(data, cutoffDate, true);
+    case "3y":
+      cutoffDate = new Date(today.setFullYear(today.getFullYear() - 3));
+      return filterData(data, cutoffDate, true);
+    case "5y":
+      cutoffDate = new Date(today.setFullYear(today.getFullYear() - 5));
+      return filterData(data, cutoffDate, true);
+    case "10y":
+      cutoffDate = new Date(today.setFullYear(today.getFullYear() - 10));
+      return filterData(data, cutoffDate, true);
+    case "max":
+    default:
+      return sampleData(data, 300);
+  }
+}
+
+function filterData(data, cutoffDate, sample) {
+  const filteredData = {};
+  for (const [date, price] of Object.entries(data)) {
+    if (new Date(date) >= cutoffDate) {
+      filteredData[date] = price;
+    }
+  }
+  return sample ? sampleData(filteredData, 300) : filteredData;
+}
+
+function sampleData(data, maxPoints) {
+  const keys = Object.keys(data);
+  const values = Object.values(data);
+
+  const step = Math.ceil(keys.length / maxPoints);
+  const sampledData = {};
+
+  for (let i = 0; i < keys.length; i += step) {
+    sampledData[keys[i]] = values[i];
+  }
+
+  return sampledData;
+}
+
+function plotData(ticker, data) {
   const chartContainer = document.getElementById("chart-container");
-  chartContainer.innerHTML = ""; // Clear existing canvas
+  if (!chartContainer) {
+    console.error("Error: #chart-container element not found in the DOM!");
+    return;
+  }
+
+  chartContainer.innerHTML = ""; // Clear any previous chart
 
   const canvas = document.createElement("canvas");
+  canvas.id = "chart";
   chartContainer.appendChild(canvas);
 
-  const rawData = data[ticker];
-  const labels = Object.keys(rawData).map((date) => new Date(date));
-  const values = Object.values(rawData);
+  const labels = Object.keys(data);
+  const prices = Object.values(data);
 
-  // Filter data based on range
-  const now = new Date();
-  let filteredLabels = labels;
-  let filteredValues = values;
+  // Get the current theme colors
+  const textColor = getComputedStyle(document.body).getPropertyValue("--text-color");
+  const gridColor = getComputedStyle(document.body).getPropertyValue("--grid-color");
 
-  if (range !== "max") {
-    const rangeMap = {
-      "10y": 10,
-      "5y": 5,
-      "4y": 4,
-      "3y": 3,
-      "2y": 2,
-      "1y": 1,
-      "6m": 0.5,
-      "1m": 1 / 12,
-    };
-    const cutoff = new Date(now);
-    cutoff.setFullYear(now.getFullYear() - (rangeMap[range] || 0));
-    cutoff.setMonth(now.getMonth() - (range === "6m" ? 6 : 0));
-    filteredLabels = labels.filter((date) => date >= cutoff);
-    filteredValues = values.slice(labels.length - filteredLabels.length);
-  }
-
-  new Chart(canvas.getContext("2d"), {
+  chart = new Chart(canvas.getContext("2d"), {
     type: "line",
     data: {
-      labels: filteredLabels,
+      labels: labels,
       datasets: [
         {
-          label: ticker,
-          data: filteredValues,
-          borderColor: "#4caf50",
+          label: `${ticker} Price`,
+          data: prices,
+          borderColor: "rgba(75, 192, 192, 1)",
           borderWidth: 2,
+          tension: 0.4,
+          pointRadius: labels.length <= 200 ? 3 : 0,
           fill: false,
-          tension: 0.4, // Smoothing
         },
       ],
     },
@@ -102,27 +111,52 @@ function plotData(data, ticker, range) {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: {
-          display: false,
-        },
         tooltip: {
-          mode: "index",
-          intersect: false,
+          enabled: true,
+          callbacks: {
+            label: (context) => {
+              const date = context.label;
+              const price = context.raw;
+              return `Date: ${date}, Price: ${price}`;
+            },
+          },
+        },
+        legend: {
+          display: true,
+          labels: {
+            color: textColor,
+          },
         },
       },
       scales: {
         x: {
           type: "time",
           time: {
-            unit: "month",
+            unit: "day",
+          },
+          title: {
+            display: true,
+            text: "Date",
+            color: textColor,
           },
           ticks: {
-            color: getComputedStyle(document.body).getPropertyValue("--text-color"),
+            color: textColor,
+          },
+          grid: {
+            color: gridColor,
           },
         },
         y: {
+          title: {
+            display: true,
+            text: "Price",
+            color: textColor,
+          },
           ticks: {
-            color: getComputedStyle(document.body).getPropertyValue("--text-color"),
+            color: textColor,
+          },
+          grid: {
+            color: gridColor,
           },
         },
       },
@@ -130,4 +164,67 @@ function plotData(data, ticker, range) {
   });
 }
 
-fetchEtfData().then(initialize);
+function updateChartTheme() {
+  if (chart) {
+    const textColor = getComputedStyle(document.body).getPropertyValue("--text-color");
+    const gridColor = getComputedStyle(document.body).getPropertyValue("--grid-color");
+
+    chart.options.plugins.legend.labels.color = textColor;
+    chart.options.scales.x.title.color = textColor;
+    chart.options.scales.x.ticks.color = textColor;
+    chart.options.scales.x.grid.color = gridColor;
+    chart.options.scales.y.title.color = textColor;
+    chart.options.scales.y.ticks.color = textColor;
+    chart.options.scales.y.grid.color = gridColor;
+
+    chart.update();
+  }
+}
+
+function toggleTheme() {
+  const body = document.body;
+  const toggleButton = document.getElementById("theme-toggle");
+
+  if (body.classList.contains("dark-mode")) {
+    body.classList.replace("dark-mode", "light-mode");
+    toggleButton.textContent = "🌙";
+  } else {
+    body.classList.replace("light-mode", "dark-mode");
+    toggleButton.textContent = "☀️";
+  }
+
+  updateChartTheme(); // Update chart colors dynamically
+}
+
+async function initialize() {
+  const data = await fetchData();
+
+  const tickerSelect = document.getElementById("ticker-select");
+  const rangeSelect = document.getElementById("range-select");
+
+  Object.keys(data).forEach((ticker) => {
+    const option = document.createElement("option");
+    option.value = ticker;
+    option.textContent = ticker;
+    tickerSelect.appendChild(option);
+  });
+
+  const defaultTicker = Object.keys(data)[0];
+  tickerSelect.value = defaultTicker;
+
+  plotData(defaultTicker, filterDataByRange(data[defaultTicker], "max"));
+
+  tickerSelect.addEventListener("change", () => {
+    const selectedTicker = tickerSelect.value;
+    const selectedRange = rangeSelect.value;
+    plotData(selectedTicker, filterDataByRange(data[selectedTicker], selectedRange));
+  });
+
+  rangeSelect.addEventListener("change", () => {
+    const selectedTicker = tickerSelect.value;
+    const selectedRange = rangeSelect.value;
+    plotData(selectedTicker, filterDataByRange(data[selectedTicker], selectedRange));
+  });
+
+  document.getElementById("theme-toggle").addEventListener("click", toggleTheme);
+}
