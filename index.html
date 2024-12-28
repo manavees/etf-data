@@ -9,23 +9,9 @@
         href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.css"
     />
     <style>
-        :root {
-            --background-color: #ffffff;
-            --text-color: #000000;
-            --axis-color: #000000;
-            --grid-color: #cccccc;
-        }
-
-        .dark-mode {
-            --background-color: #121212;
-            --text-color: #ffffff;
-            --axis-color: #ffffff;
-            --grid-color: #333333;
-        }
-
         body {
-            background-color: var(--background-color);
-            color: var(--text-color);
+            background-color: #ffffff;
+            color: #000000;
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
@@ -42,36 +28,26 @@
             height: 400px;
         }
 
-        select,
-        button {
+        select {
             margin: 10px 0;
             padding: 10px;
             font-size: 1rem;
-        }
-
-        .controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="controls">
-            <select id="ticker-selector"></select>
-            <select id="range-selector">
-                <option value="1M">1 Month</option>
-                <option value="6M">6 Months</option>
-                <option value="1Y">1 Year</option>
-                <option value="2Y">2 Years</option>
-                <option value="3Y">3 Years</option>
-                <option value="5Y">5 Years</option>
-                <option value="10Y">10 Years</option>
-                <option value="MAX">Max</option>
-            </select>
-            <button id="theme-toggle">Dark Mode</button>
-        </div>
+        <select id="ticker-selector"></select>
+        <select id="range-selector">
+            <option value="1M">1 Month</option>
+            <option value="6M">6 Months</option>
+            <option value="1Y">1 Year</option>
+            <option value="2Y">2 Years</option>
+            <option value="3Y">3 Years</option>
+            <option value="5Y">5 Years</option>
+            <option value="10Y">10 Years</option>
+            <option value="MAX">Max</option>
+        </select>
         <div id="chart-container"></div>
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
