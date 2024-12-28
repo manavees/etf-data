@@ -1,12 +1,11 @@
 import yfinance as yf
 import duckdb
 import json
-import pandas as pd
 from datetime import datetime
+import pandas as pd
 
 # Define database file
 db_file = "etf-data.duckdb"
-
 
 def initialize_duckdb():
     """
@@ -24,7 +23,6 @@ def initialize_duckdb():
     conn.close()
     print(f"Database {db_file} initialized successfully.")
 
-
 def fetch_existing_data(conn, ticker):
     """
     Fetch existing data for a specific ticker from DuckDB.
@@ -40,7 +38,6 @@ def fetch_existing_data(conn, ticker):
     result = conn.execute(query, [ticker]).fetchall()
     return {str(row[0]): row[1] for row in result}
 
-
 def fetch_historical_etf_data(conn, ticker, start_date, end_date):
     """
     Fetch historical ETF data and insert it into DuckDB.
@@ -53,9 +50,6 @@ def fetch_historical_etf_data(conn, ticker, start_date, end_date):
     """
     print(f"Fetching data for {ticker} from {start_date} to {end_date}...")
     data = yf.download(ticker, start=start_date, end=end_date)
-
-    # Debug: Print the raw data to verify structure
-    print(f"Raw data for {ticker}:\n{data.head()}")
 
     if not data.empty:
         # Use "Adj Close" or fallback to "Close"
@@ -76,25 +70,18 @@ def fetch_historical_etf_data(conn, ticker, start_date, end_date):
                     print(f"Skipping invalid row for {ticker}: {row}")
                     continue
 
-                # Convert date and price to proper formats
-                date_str = date.strftime("%Y-%m-%d") if hasattr(date, "strftime") else str(date)
-                price = float(price)
-
                 # Insert into DuckDB
                 conn.execute("""
                     INSERT INTO etf_data (ticker, date, price)
                     VALUES (?, ?, ?)
                     ON CONFLICT (ticker, date) DO UPDATE SET price = excluded.price
-                """, (ticker, date_str, price))
+                """, (ticker, date, price))
             except Exception as e:
                 print(f"Error processing row for {ticker}: {row}\n{e}")
 
         print(f"Data for {ticker} updated successfully.")
     else:
         print(f"No data available for {ticker}.")
-
-
-
 
 def main():
     """
@@ -123,7 +110,6 @@ def main():
         fetch_historical_etf_data(conn, ticker, start_date, end_date)
 
     conn.close()
-
 
 if __name__ == "__main__":
     main()
