@@ -50,16 +50,19 @@ def fetch_historical_etf_data(etf_tickers, start_date, end_date):
         try:
             print(f"Fetching data for {ticker} from {start_date} to {end_date}...")
             data = yf.download(ticker, start=start_date, end=end_date)
+
             if not data.empty:
                 if "Adj Close" in data.columns:
-                    # Convert 'Adj Close' Series to dictionary with string keys
+                    # Convert the index (dates) to strings
                     historical_data[ticker] = {
-                        str(date): price for date, price in data['Adj Close'].to_dict().items()
+                        date.strftime("%Y-%m-%d"): price
+                        for date, price in data['Adj Close'].items()
                     }
                 elif "Close" in data.columns:
-                    # Convert 'Close' Series to dictionary with string keys
+                    # Convert the index (dates) to strings
                     historical_data[ticker] = {
-                        str(date): price for date, price in data['Close'].to_dict().items()
+                        date.strftime("%Y-%m-%d"): price
+                        for date, price in data['Close'].items()
                     }
                 else:
                     print(f"Warning: No 'Adj Close' or 'Close' data found for {ticker}. Skipping.")
@@ -72,6 +75,7 @@ def fetch_historical_etf_data(etf_tickers, start_date, end_date):
 
 
 
+
 def update_json_file(file_name, new_data):
     """Update the JSON file with the new historical data."""
     try:
@@ -81,18 +85,20 @@ def update_json_file(file_name, new_data):
         print(f"{file_name} not found. Creating a new file.")
         current_data = {}
 
-    # Merge new data
+    # Merge new data, ensuring all keys are strings
     for ticker, values in new_data.items():
         if ticker not in current_data:
             current_data[ticker] = {}
-        # Ensure all keys are strings
-        current_data[ticker].update({str(k): v for k, v in values.items()})
+        current_data[ticker].update({
+            str(k): v for k, v in values.items()
+        })
 
     # Save the updated data
     with open(file_name, "w") as json_file:
         json.dump(current_data, json_file, indent=4)
 
     print(f"Data updated and saved to {file_name}")
+
 
 
 def main():
