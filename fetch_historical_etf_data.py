@@ -47,12 +47,18 @@ def fetch_historical_etf_data(etf_tickers, start_date, end_date):
     historical_data = {}
 
     for ticker in etf_tickers:
-        print(f"Fetching data for {ticker} from {start_date} to {end_date}...")
-        data = yf.download(ticker, start=start_date, end=end_date)
-        if not data.empty:
-            historical_data[ticker] = data['Adj Close'].to_dict()
+        try:
+            print(f"Fetching data for {ticker} from {start_date} to {end_date}...")
+            data = yf.download(ticker, start=start_date, end=end_date)
+            if not data.empty and "Adj Close" in data.columns:
+                historical_data[ticker] = data['Adj Close'].to_dict()
+            else:
+                print(f"Warning: No 'Adj Close' data found for {ticker}. Skipping.")
+        except Exception as e:
+            print(f"Error fetching data for {ticker}: {e}")
 
     return historical_data
+
 
 def update_json_file(file_name, new_data):
     """Update the JSON file with the new historical data."""
@@ -80,7 +86,12 @@ def main():
     """Main function to fetch and update ETF historical data."""
     print("Fetching historical ETF data...")
     historical_data = fetch_historical_etf_data(ETF_TICKERS, START_DATE, END_DATE)
-    update_json_file(JSON_FILE, historical_data)
+
+    if historical_data:
+        update_json_file(JSON_FILE, historical_data)
+    else:
+        print("No valid data fetched. Exiting without updating the file.")
+
 
 if __name__ == "__main__":
     main()
