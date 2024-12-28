@@ -6,7 +6,7 @@ from datetime import datetime
 # Define file names
 TICKERS_FILE = "etf-tickers.json"
 DATA_FILE = "etf-data.json"
-DEFAULT_START_DATE = "1990-12-01"  # Default start date for meaningful testing
+DEFAULT_START_DATE = "2024-12-01"  # Default start date for meaningful testing
 
 def load_etf_tickers(file_name):
     """Load ETF tickers from a JSON file."""
