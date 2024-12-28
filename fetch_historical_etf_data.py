@@ -43,21 +43,27 @@ START_DATE = get_latest_date_from_file(JSON_FILE)
 END_DATE = datetime.now().strftime("%Y-%m-%d")  # End date is always today
 
 def fetch_historical_etf_data(etf_tickers, start_date, end_date):
-    """Fetch historical adjusted close data for given ETFs."""
+    """Fetch historical adjusted close or close data for given ETFs."""
     historical_data = {}
 
     for ticker in etf_tickers:
         try:
             print(f"Fetching data for {ticker} from {start_date} to {end_date}...")
             data = yf.download(ticker, start=start_date, end=end_date)
-            if not data.empty and "Adj Close" in data.columns:
-                historical_data[ticker] = data['Adj Close'].to_dict()
+            if not data.empty:
+                if "Adj Close" in data.columns:
+                    historical_data[ticker] = data['Adj Close'].to_dict()
+                elif "Close" in data.columns:
+                    historical_data[ticker] = data['Close'].to_dict()
+                else:
+                    print(f"Warning: No 'Adj Close' or 'Close' data found for {ticker}. Skipping.")
             else:
-                print(f"Warning: No 'Adj Close' data found for {ticker}. Skipping.")
+                print(f"Warning: No data returned for {ticker}. Skipping.")
         except Exception as e:
             print(f"Error fetching data for {ticker}: {e}")
 
     return historical_data
+
 
 
 def update_json_file(file_name, new_data):
