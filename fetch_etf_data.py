@@ -52,7 +52,8 @@ def fetch_historical_etf_data(conn, ticker, start_date, end_date):
     if not data.empty:
         # Use "Adj Close" or fallback to "Close"
         column = "Adj Close" if "Adj Close" in data.columns else "Close"
-        for date, price in data[column].dropna().iteritems():  # Ensure price is scalar
+        column_data = data[column].dropna()
+        for date, price in column_data.items():  # Use .items() for Series
             date_str = date.strftime("%Y-%m-%d") if hasattr(date, "strftime") else str(date)
             conn.execute("""
                 INSERT INTO etf_data (ticker, date, price)
@@ -62,6 +63,7 @@ def fetch_historical_etf_data(conn, ticker, start_date, end_date):
         print(f"Data for {ticker} updated successfully.")
     else:
         print(f"No data available for {ticker}.")
+
 
 
 def main():
