@@ -1,10 +1,11 @@
-// Fetch the JSON data and initialize visualization
+document.addEventListener("DOMContentLoaded", initialize);
+
 async function fetchData() {
   try {
     const response = await fetch("etf-data.json");
     if (!response.ok) throw new Error("Failed to fetch etf-data.json");
     const data = await response.json();
-    console.log("Fetched Data:", data); // Debugging
+    console.log("Fetched Data:", data);
     return data;
   } catch (error) {
     console.error("Error fetching data:", error);
@@ -12,74 +13,63 @@ async function fetchData() {
   }
 }
 
-
-// Filter data based on the selected time range
 function filterDataByRange(data, range) {
-  const now = new Date();
-  const dateKeys = Object.keys(data).sort();
+  const today = new Date();
+  let cutoffDate;
 
-  let filteredKeys;
   switch (range) {
     case "1m":
-      filteredKeys = dateKeys.filter(
-        (date) => new Date(date) >= new Date(now.setMonth(now.getMonth() - 1))
-      );
+      cutoffDate = new Date(today.setMonth(today.getMonth() - 1));
       break;
-    case "3m":
-      filteredKeys = dateKeys.filter(
-        (date) => new Date(date) >= new Date(now.setMonth(now.getMonth() - 3))
-      );
+    case "6m":
+      cutoffDate = new Date(today.setMonth(today.getMonth() - 6));
       break;
     case "1y":
-      filteredKeys = dateKeys.filter(
-        (date) => new Date(date) >= new Date(now.setFullYear(now.getFullYear() - 1))
-      );
+      cutoffDate = new Date(today.setFullYear(today.getFullYear() - 1));
       break;
+    case "max":
     default:
-      filteredKeys = dateKeys; // Max range
+      return data; // Return all data
   }
 
-  return filteredKeys.reduce((obj, key) => {
-    obj[key] = data[key];
-    return obj;
-  }, {});
+  // Filter data by date
+  const filteredData = {};
+  for (const [date, price] of Object.entries(data)) {
+    if (new Date(date) >= cutoffDate) {
+      filteredData[date] = price;
+    }
+  }
+  return filteredData;
 }
 
-// Plot data on the chart
 function plotData(ticker, data) {
-  const ctx = document.getElementById("etf-chart").getContext("2d");
-
-  // Destroy the existing chart if it exists
-  if (window.etfChart) {
-    window.etfChart.destroy();
-  }
-
   const labels = Object.keys(data);
   const prices = Object.values(data);
 
-  window.etfChart = new Chart(ctx, {
+  const chartContainer = document.getElementById("chart-container");
+  chartContainer.innerHTML = ""; // Clear any previous chart
+
+  const canvas = document.createElement("canvas");
+  canvas.id = "chart";
+  chartContainer.appendChild(canvas);
+
+  new Chart(canvas.getContext("2d"), {
     type: "line",
     data: {
-      labels,
+      labels: labels,
       datasets: [
         {
           label: `${ticker} Price`,
           data: prices,
-          borderColor: "#007bff",
-          backgroundColor: "rgba(0, 123, 255, 0.2)",
-          fill: true,
-          tension: 0.4,
+          borderColor: "rgba(75, 192, 192, 1)",
+          borderWidth: 2,
+          fill: false,
         },
       ],
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          position: "top",
-        },
-      },
       scales: {
         x: {
           type: "time",
@@ -94,7 +84,7 @@ function plotData(ticker, data) {
         y: {
           title: {
             display: true,
-            text: "Price (USD)",
+            text: "Price",
           },
         },
       },
@@ -106,6 +96,7 @@ async function initialize() {
   const data = await fetchData();
 
   const tickerSelect = document.getElementById("ticker-select");
+  const rangeSelect = document.getElementById("range-select");
 
   if (Object.keys(data).length === 0) {
     console.error("No tickers found in the fetched data!");
@@ -120,17 +111,26 @@ async function initialize() {
     tickerSelect.appendChild(option);
   });
 
-  console.log("Tickers:", Object.keys(data)); // Debugging
+  console.log("Tickers:", Object.keys(data));
 
   // Default to the first ticker
   const defaultTicker = Object.keys(data)[0];
-  plotData(defaultTicker, data[defaultTicker]);
+  const defaultRange = "max";
+  const filteredData = filterDataByRange(data[defaultTicker], defaultRange);
+  plotData(defaultTicker, filteredData);
 
   // Add event listeners for dropdowns
   tickerSelect.addEventListener("change", () => {
     const selectedTicker = tickerSelect.value;
-    const filteredData = filterDataByRange(data[selectedTicker], "max");
+    const selectedRange = rangeSelect.value;
+    const filteredData = filterDataByRange(data[selectedTicker], selectedRange);
+    plotData(selectedTicker, filteredData);
+  });
+
+  rangeSelect.addEventListener("change", () => {
+    const selectedTicker = tickerSelect.value;
+    const selectedRange = rangeSelect.value;
+    const filteredData = filterDataByRange(data[selectedTicker], selectedRange);
     plotData(selectedTicker, filteredData);
   });
 }
-
