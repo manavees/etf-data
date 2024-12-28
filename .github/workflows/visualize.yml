@@ -1,0 +1,32 @@
+name: Visualize ETF Data
+
+on:
+  workflow_dispatch:  # Allows you to trigger the workflow manually
+
+jobs:
+  visualize-etf-data:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+
+    - name: Set Up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'  # Use a compatible Python version
+
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install duckdb pandas matplotlib
+
+    - name: Run Visualization Script
+      run: python visualize_etf_data.py
+
+    - name: Save Plots as Artifacts
+      if: success()
+      uses: actions/upload-artifact@v3
+      with:
+        name: etf-plots
+        path: plots/
