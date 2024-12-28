@@ -74,6 +74,14 @@ function plotData(ticker, data) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true,
+          labels: {
+            color: "#ffffff",
+          },
+        },
+      },
       scales: {
         x: {
           type: "time",
@@ -83,12 +91,20 @@ function plotData(ticker, data) {
           title: {
             display: true,
             text: "Date",
+            color: "#ffffff",
+          },
+          ticks: {
+            color: "#ffffff",
           },
         },
         y: {
           title: {
             display: true,
             text: "Price",
+            color: "#ffffff",
+          },
+          ticks: {
+            color: "#ffffff",
           },
         },
       },
